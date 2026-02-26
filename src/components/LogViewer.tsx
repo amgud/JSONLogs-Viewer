@@ -413,6 +413,7 @@ function ExpandedRow({
 }) {
   const [view, setView] = useState<"json" | "trace">("json")
   const [copied, setCopied] = useState(false)
+  const [fullscreen, setFullscreen] = useState(false)
   const traces = extractStackTraces(entry)
 
   const json = JSON.stringify(
@@ -435,95 +436,124 @@ function ExpandedRow({
     })
   }
 
-  return (
-    <TableRow className="bg-muted/30 hover:bg-muted/30">
-      <TableCell colSpan={colSpan} className="p-0">
-        {/* Tab bar */}
-        <div
-          className="flex items-center gap-1 border-b border-border px-3 pt-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            className={cn(
-              "px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors",
-              view === "json"
-                ? "border-primary text-foreground"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-            onClick={() => setView("json")}
-          >
-            JSON
-          </button>
-          {traces.length > 0 && (
-            <button
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors",
-                view === "trace"
-                  ? "border-primary text-foreground"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              )}
-              onClick={() => setView("trace")}
-            >
-              <Terminal className="h-3 w-3" />
-              Stack Trace
-            </button>
-          )}
-          {/* Copy button aligned right */}
-          <div className="ml-auto pb-1">
-            {view === "json" ? (
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 gap-1 text-xs"
-                onClick={handleCopyJson}
-              >
-                {copied ? (
-                  <><Check className="h-3 w-3 text-green-400" />Copied</>
-                ) : (
-                  <><Copy className="h-3 w-3" />Copy JSON</>
-                )}
-              </Button>
-            ) : (
-              traces.map(({ trace }, i) => (
-                <Button
-                  key={i}
-                  size="sm"
-                  variant="ghost"
-                  className="h-6 gap-1 text-xs"
-                  onClick={() => handleCopyTrace(trace)}
-                >
-                  {copied ? (
-                    <><Check className="h-3 w-3 text-green-400" />Copied</>
-                  ) : (
-                    <><Copy className="h-3 w-3" />Copy</>
-                  )}
-                </Button>
-              ))
-            )}
-          </div>
-        </div>
+  // Close fullscreen on Escape
+  useEffect(() => {
+    if (!fullscreen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFullscreen(false) }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [fullscreen])
 
-        {/* Panel content */}
-        {view === "json" ? (
-          <div className="max-h-72 overflow-y-auto overflow-x-auto p-4" onClick={(e) => e.stopPropagation()}>
-            <JsonHighlight json={json} />
-          </div>
-        ) : (
-          <div className="max-h-96 overflow-y-auto overflow-x-auto p-4 space-y-4" onClick={(e) => e.stopPropagation()}>
-            {traces.map(({ label, trace }, i) => (
-              <div key={i}>
-                {traces.length > 1 && (
-                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    {label}
-                  </p>
-                )}
-                <StackTraceView trace={trace} />
-              </div>
-            ))}
-          </div>
+  const TabBar = ({ inFullscreen }: { inFullscreen: boolean }) => (
+    <div
+      className="flex items-center gap-1 border-b border-border px-3 pt-2 shrink-0"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <button
+        className={cn(
+          "px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors",
+          view === "json"
+            ? "border-primary text-foreground"
+            : "border-transparent text-muted-foreground hover:text-foreground"
         )}
-      </TableCell>
-    </TableRow>
+        onClick={() => setView("json")}
+      >
+        JSON
+      </button>
+      {traces.length > 0 && (
+        <button
+          className={cn(
+            "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors",
+            view === "trace"
+              ? "border-primary text-foreground"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          )}
+          onClick={() => setView("trace")}
+        >
+          <Terminal className="h-3 w-3" />
+          Stack Trace
+        </button>
+      )}
+      <div className="ml-auto flex items-center gap-1 pb-1">
+        {/* Copy */}
+        {view === "json" ? (
+          <Button size="sm" variant="ghost" className="h-6 gap-1 text-xs" onClick={handleCopyJson}>
+            {copied ? <><Check className="h-3 w-3 text-green-400" />Copied</> : <><Copy className="h-3 w-3" />Copy JSON</>}
+          </Button>
+        ) : (
+          traces.map(({ trace }, i) => (
+            <Button key={i} size="sm" variant="ghost" className="h-6 gap-1 text-xs" onClick={() => handleCopyTrace(trace)}>
+              {copied ? <><Check className="h-3 w-3 text-green-400" />Copied</> : <><Copy className="h-3 w-3" />Copy</>}
+            </Button>
+          ))
+        )}
+        {/* Fullscreen toggle */}
+        <Button
+          size="icon"
+          variant="ghost"
+          className="h-6 w-6"
+          title={inFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"}
+          onClick={(e) => { e.stopPropagation(); setFullscreen((f) => !f) }}
+        >
+          {inFullscreen
+            ? <Minimize2 className="h-3.5 w-3.5" />
+            : <Maximize2 className="h-3.5 w-3.5" />}
+        </Button>
+      </div>
+    </div>
+  )
+
+  const PanelContent = ({ grow }: { grow?: boolean }) => (
+    view === "json" ? (
+      <div
+        className={cn("overflow-y-auto overflow-x-auto p-4", grow ? "flex-1" : "max-h-72")}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <JsonHighlight json={json} />
+      </div>
+    ) : (
+      <div
+        className={cn("overflow-y-auto overflow-x-auto p-4 space-y-4", grow ? "flex-1" : "max-h-96")}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {traces.map(({ label, trace }, i) => (
+          <div key={i}>
+            {traces.length > 1 && (
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {label}
+              </p>
+            )}
+            <StackTraceView trace={trace} />
+          </div>
+        ))}
+      </div>
+    )
+  )
+
+  return (
+    <>
+      <TableRow className="bg-muted/30 hover:bg-muted/30">
+        <TableCell colSpan={colSpan} className="p-0">
+          <TabBar inFullscreen={false} />
+          <PanelContent />
+        </TableCell>
+      </TableRow>
+
+      {/* Fullscreen overlay */}
+      {fullscreen && (
+        <tr>
+          <td colSpan={colSpan} className="p-0">
+            <div
+              className="fixed inset-0 z-50 flex flex-col bg-background border border-border shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <TabBar inFullscreen={true} />
+              <PanelContent grow />
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
   )
 }
 
@@ -538,7 +568,6 @@ export function LogViewer() {
   const [search, setSearch] = useState("")
   const [sortCol, setSortCol] = useState<SortCol | null>("time")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
-  const [fullscreen, setFullscreen] = useState(false)
   const [expandedId, setExpandedId] = useState<number | null>(null)
 
   const handleLoad = useCallback((text: string, name: string) => {
@@ -641,7 +670,7 @@ export function LogViewer() {
   }
 
   return (
-    <div className={cn("flex flex-col bg-background", fullscreen ? "fixed inset-0 z-50" : "h-screen")}>
+    <div className="flex h-screen flex-col bg-background">
       {/* Header */}
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
         <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
@@ -659,17 +688,6 @@ export function LogViewer() {
           >
             <Clipboard className="h-3.5 w-3.5" />
             Paste
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 shrink-0"
-            title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
-            onClick={() => setFullscreen((f) => !f)}
-          >
-            {fullscreen
-              ? <Minimize2 className="h-4 w-4" />
-              : <Maximize2 className="h-4 w-4" />}
           </Button>
           <Button
             variant="ghost"
