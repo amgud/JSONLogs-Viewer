@@ -18,12 +18,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
@@ -216,84 +210,6 @@ function StackTraceView({ trace }: { trace: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// Stack Trace Modal
-// ---------------------------------------------------------------------------
-
-interface StackTraceModalProps {
-  entry: LogEntry | null
-  onClose: () => void
-}
-
-function StackTraceModal({ entry, onClose }: StackTraceModalProps) {
-  const traces = entry ? extractStackTraces(entry) : []
-  const [copied, setCopied] = useState(false)
-
-  const handleCopy = (trace: string) => {
-    void navigator.clipboard.writeText(trace).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
-  }
-
-  return (
-    <Dialog open={!!entry} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col gap-0 p-0">
-        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
-          <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
-            <Terminal className="h-4 w-4 text-muted-foreground" />
-            Stack Trace
-            {entry && (
-              <Badge
-                variant="outline"
-                className={cn(
-                  "ml-2 text-[10px] uppercase",
-                  levelVariant((entry.level ?? "").toLowerCase())
-                )}
-              >
-                {entry.level}
-              </Badge>
-            )}
-          </DialogTitle>
-          {entry && (
-            <p className="text-xs text-muted-foreground mt-1">{formatTime(entry)}</p>
-          )}
-        </DialogHeader>
-        <ScrollArea className="flex-1 overflow-auto">
-          <div className="px-5 py-4 space-y-5">
-            {traces.map(({ label, trace }, i) => (
-              <div key={i}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                    {label}
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-6 gap-1 text-xs"
-                    onClick={() => handleCopy(trace)}
-                  >
-                    {copied
-                      ? <><Check className="h-3 w-3 text-green-400" />Copied</>
-                      : <><Copy className="h-3 w-3" />Copy</>
-                    }
-                  </Button>
-                </div>
-                <StackTraceView trace={trace} />
-              </div>
-            ))}
-            {traces.length === 0 && (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No stack trace found in this entry.
-              </p>
-            )}
-          </div>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
@@ -442,22 +358,29 @@ function DropZone({
 function ExpandedRow({
   entry,
   colSpan,
-  onViewTrace,
 }: {
   entry: LogEntry
   colSpan: number
-  onViewTrace: () => void
 }) {
+  const [view, setView] = useState<"json" | "trace">("json")
   const [copied, setCopied] = useState(false)
   const traces = extractStackTraces(entry)
 
-  const json = JSON.stringify(entry, null, 2)
+  const json = JSON.stringify(
+    Object.fromEntries(Object.entries(entry).filter(([k]) => k !== "id")),
+    null,
+    2
+  )
 
-  const handleCopy = () => {
-    const rest = Object.fromEntries(
-      Object.entries(entry).filter(([k]) => k !== "id")
-    )
-    void navigator.clipboard.writeText(JSON.stringify(rest, null, 2)).then(() => {
+  const handleCopyJson = () => {
+    void navigator.clipboard.writeText(json).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+
+  const handleCopyTrace = (trace: string) => {
+    void navigator.clipboard.writeText(trace).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
     })
@@ -466,50 +389,92 @@ function ExpandedRow({
   return (
     <TableRow className="bg-muted/30 hover:bg-muted/30">
       <TableCell colSpan={colSpan} className="p-0">
-        <div className="relative">
-          {/* Action buttons */}
-          <div className="absolute right-3 top-3 z-10 flex gap-1.5">
-            {traces.length > 0 && (
+        {/* Tab bar */}
+        <div
+          className="flex items-center gap-1 border-b border-border px-3 pt-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors",
+              view === "json"
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground"
+            )}
+            onClick={() => setView("json")}
+          >
+            JSON
+          </button>
+          {traces.length > 0 && (
+            <button
+              className={cn(
+                "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors",
+                view === "trace"
+                  ? "border-primary text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+              onClick={() => setView("trace")}
+            >
+              <Terminal className="h-3 w-3" />
+              Stack Trace
+            </button>
+          )}
+          {/* Copy button aligned right */}
+          <div className="ml-auto pb-1">
+            {view === "json" ? (
               <Button
                 size="sm"
-                variant="secondary"
-                className="h-7 gap-1 text-xs"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onViewTrace()
-                }}
+                variant="ghost"
+                className="h-6 gap-1 text-xs"
+                onClick={handleCopyJson}
               >
-                <Terminal className="h-3 w-3" />
-                Stack Trace
+                {copied ? (
+                  <><Check className="h-3 w-3 text-green-400" />Copied</>
+                ) : (
+                  <><Copy className="h-3 w-3" />Copy JSON</>
+                )}
               </Button>
+            ) : (
+              traces.map(({ trace }, i) => (
+                <Button
+                  key={i}
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 gap-1 text-xs"
+                  onClick={() => handleCopyTrace(trace)}
+                >
+                  {copied ? (
+                    <><Check className="h-3 w-3 text-green-400" />Copied</>
+                  ) : (
+                    <><Copy className="h-3 w-3" />Copy</>
+                  )}
+                </Button>
+              ))
             )}
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 gap-1 text-xs"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleCopy()
-              }}
-            >
-              {copied ? (
-                <>
-                  <Check className="h-3 w-3 text-green-400" /> Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3 w-3" /> Copy
-                </>
-              )}
-            </Button>
           </div>
-          {/* Fixed-height scrollable pre — no ScrollArea inside table */}
-          <div className="max-h-64 overflow-y-auto overflow-x-auto">
-            <pre className="p-4 pt-12 text-xs leading-relaxed text-muted-foreground whitespace-pre">
+        </div>
+
+        {/* Panel content */}
+        {view === "json" ? (
+          <div className="max-h-64 overflow-y-auto overflow-x-auto" onClick={(e) => e.stopPropagation()}>
+            <pre className="p-4 text-xs leading-relaxed text-muted-foreground whitespace-pre">
               {json}
             </pre>
           </div>
-        </div>
+        ) : (
+          <div className="max-h-96 overflow-y-auto overflow-x-auto p-4 space-y-4" onClick={(e) => e.stopPropagation()}>
+            {traces.map(({ label, trace }, i) => (
+              <div key={i}>
+                {traces.length > 1 && (
+                  <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {label}
+                  </p>
+                )}
+                <StackTraceView trace={trace} />
+              </div>
+            ))}
+          </div>
+        )}
       </TableCell>
     </TableRow>
   )
@@ -527,7 +492,6 @@ export function LogViewer() {
   const [sortCol, setSortCol] = useState<SortCol>("time")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [traceEntry, setTraceEntry] = useState<LogEntry | null>(null)
 
   const handleLoad = useCallback((text: string, name: string) => {
     const parsed = parseJsonl(text)
@@ -744,7 +708,6 @@ export function LogViewer() {
               const expanded = expandedId === entry.id
               const preview = messagePreview(entry)
               const level = (entry.level ?? "unknown").toLowerCase()
-              const hasTrace = extractStackTraces(entry).length > 0
 
               return (
                 <>
@@ -771,25 +734,9 @@ export function LogViewer() {
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        {hasTrace && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-5 w-5 shrink-0 text-muted-foreground hover:text-foreground"
-                            title="View stack trace"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setTraceEntry(entry)
-                            }}
-                          >
-                            <Terminal className="h-3 w-3" />
-                          </Button>
-                        )}
-                        <span className="block truncate" title={preview}>
-                          {preview}
-                        </span>
-                      </div>
+                      <span className="block truncate" title={preview}>
+                        {preview}
+                      </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {expanded ? (
@@ -804,7 +751,6 @@ export function LogViewer() {
                       key={`exp-${entry.id}`}
                       entry={entry}
                       colSpan={4}
-                      onViewTrace={() => setTraceEntry(entry)}
                     />
                   )}
                 </>
@@ -814,11 +760,6 @@ export function LogViewer() {
         </Table>
       </ScrollArea>
 
-      {/* Stack Trace Modal */}
-      <StackTraceModal
-        entry={traceEntry}
-        onClose={() => setTraceEntry(null)}
-      />
     </div>
   )
 }
