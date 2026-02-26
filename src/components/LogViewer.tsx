@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react"
+import { useState, useCallback, useMemo, useRef, useEffect } from "react"
 import {
   parseJsonl,
   messagePreview,
@@ -18,13 +18,21 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
   ChevronsUpDown,
   Check,
+  Clipboard,
   Copy,
   FileText,
+  Terminal,
   Upload,
   X,
 } from "lucide-react"
@@ -90,23 +98,233 @@ function matchesSearch(entry: LogEntry, query: string): boolean {
   return JSON.stringify(entry).toLowerCase().includes(q)
 }
 
+/** Collect all stack-trace strings from an entry (top-level + nested payload) */
+function extractStackTraces(entry: LogEntry): { label: string; trace: string }[] {
+  const out: { label: string; trace: string }[] = []
+
+  // top-level .stack (e.g. warn entries)
+  if (entry.stack && typeof entry.stack === "string") {
+    out.push({ label: "Stack Trace", trace: entry.stack })
+  }
+
+  // message.payload.stackTrace (desl-service error entries)
+  const msg = entry.message
+  if (msg && typeof msg === "object") {
+    const m = msg as Record<string, unknown>
+    const payload = m["payload"] as Record<string, unknown> | undefined
+    if (payload?.stackTrace && typeof payload.stackTrace === "string") {
+      out.push({ label: "Downstream Stack Trace", trace: payload.stackTrace })
+    }
+  }
+
+  // top-level .stackTrace
+  if (entry.stackTrace && typeof entry.stackTrace === "string") {
+    out.push({ label: "Stack Trace", trace: entry.stackTrace })
+  }
+
+  return out
+}
+
+// ---------------------------------------------------------------------------
+// Stack trace syntax highlighting
+// ---------------------------------------------------------------------------
+
+function StackTraceLine({ line }: { line: string }) {
+  const trimmed = line.trim()
+  const indent = line.match(/^(\s*)/)?.[1] ?? ""
+
+  if (!trimmed.startsWith("at ")) {
+    // Error header: "ErrorType: message" or plain message
+    const m = trimmed.match(/^([A-Za-z][\w.]*(?:Error|Exception|Warning)?)\s*:(.*)$/)
+    if (m) {
+      return (
+        <span>
+          <span className="font-semibold text-red-400">{m[1]}</span>
+          <span className="text-amber-300">:{m[2]}</span>
+        </span>
+      )
+    }
+    return <span className="text-amber-300">{line}</span>
+  }
+
+  const rest = trimmed.slice(3) // drop "at "
+
+  const isNodeInternal = rest.startsWith("node:") || /\(node:/.test(rest)
+  const isVendor = rest.includes("node_modules/")
+
+  const dim = isNodeInternal ? "opacity-25" : isVendor ? "opacity-45" : ""
+
+  // "fnName (file:line:col)"
+  const withFn = rest.match(/^(.+?)\s+\((.+):(\d+):(\d+)\)$/)
+  if (withFn) {
+    const [, fn, file, ln, col] = withFn
+    const fileColor =
+      isNodeInternal || isVendor ? "text-muted-foreground" : "text-emerald-400"
+    return (
+      <span className={dim}>
+        {indent}
+        <span className="text-muted-foreground">at </span>
+        <span className="text-sky-300">{fn}</span>
+        <span className="text-muted-foreground"> (</span>
+        <span className={fileColor}>{file}</span>
+        <span className="text-muted-foreground">:</span>
+        <span className="text-yellow-400">{ln}</span>
+        <span className="text-muted-foreground">:</span>
+        <span className="text-yellow-400/50">{col}</span>
+        <span className="text-muted-foreground">)</span>
+      </span>
+    )
+  }
+
+  // "file:line:col" (anonymous / top-level)
+  const anon = rest.match(/^(.+):(\d+):(\d+)$/)
+  if (anon) {
+    const [, file, ln, col] = anon
+    return (
+      <span className={dim}>
+        {indent}
+        <span className="text-muted-foreground">at </span>
+        <span className="text-emerald-400">{file}</span>
+        <span className="text-muted-foreground">:</span>
+        <span className="text-yellow-400">{ln}</span>
+        <span className="text-muted-foreground">:</span>
+        <span className="text-yellow-400/50">{col}</span>
+      </span>
+    )
+  }
+
+  return (
+    <span className={dim}>
+      {indent}
+      <span className="text-muted-foreground">at </span>
+      <span className="text-muted-foreground">{rest}</span>
+    </span>
+  )
+}
+
+function StackTraceView({ trace }: { trace: string }) {
+  const lines = trace.split("\n")
+  return (
+    <pre className="overflow-x-auto rounded-md bg-black/40 p-4 text-xs leading-6 font-mono">
+      {lines.map((line, i) => (
+        <div key={i}>
+          <StackTraceLine line={line} />
+        </div>
+      ))}
+    </pre>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Stack Trace Modal
+// ---------------------------------------------------------------------------
+
+interface StackTraceModalProps {
+  entry: LogEntry | null
+  onClose: () => void
+}
+
+function StackTraceModal({ entry, onClose }: StackTraceModalProps) {
+  const traces = entry ? extractStackTraces(entry) : []
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = (trace: string) => {
+    void navigator.clipboard.writeText(trace).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    })
+  }
+
+  return (
+    <Dialog open={!!entry} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
+          <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
+            <Terminal className="h-4 w-4 text-muted-foreground" />
+            Stack Trace
+            {entry && (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "ml-2 text-[10px] uppercase",
+                  levelVariant((entry.level ?? "").toLowerCase())
+                )}
+              >
+                {entry.level}
+              </Badge>
+            )}
+          </DialogTitle>
+          {entry && (
+            <p className="text-xs text-muted-foreground mt-1">{formatTime(entry)}</p>
+          )}
+        </DialogHeader>
+        <ScrollArea className="flex-1 overflow-auto">
+          <div className="px-5 py-4 space-y-5">
+            {traces.map(({ label, trace }, i) => (
+              <div key={i}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    {label}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 gap-1 text-xs"
+                    onClick={() => handleCopy(trace)}
+                  >
+                    {copied
+                      ? <><Check className="h-3 w-3 text-green-400" />Copied</>
+                      : <><Copy className="h-3 w-3" />Copy</>
+                    }
+                  </Button>
+                </div>
+                <StackTraceView trace={trace} />
+              </div>
+            ))}
+            {traces.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No stack trace found in this entry.
+              </p>
+            )}
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function SortIcon({ col, sortCol, sortDir }: { col: SortCol; sortCol: SortCol; sortDir: SortDir }) {
+function SortIcon({
+  col,
+  sortCol,
+  sortDir,
+}: {
+  col: SortCol
+  sortCol: SortCol
+  sortDir: SortDir
+}) {
   if (sortCol !== col) return <ChevronsUpDown className="ml-1 h-3 w-3 opacity-40" />
-  return sortDir === "asc"
-    ? <ChevronUp className="ml-1 h-3 w-3" />
-    : <ChevronDown className="ml-1 h-3 w-3" />
+  return sortDir === "asc" ? (
+    <ChevronUp className="ml-1 h-3 w-3" />
+  ) : (
+    <ChevronDown className="ml-1 h-3 w-3" />
+  )
 }
 
 // ---------------------------------------------------------------------------
 // DropZone
 // ---------------------------------------------------------------------------
 
-function DropZone({ onLoad }: { onLoad: (text: string, name: string) => void }) {
+function DropZone({
+  onLoad,
+}: {
+  onLoad: (text: string, name: string) => void
+}) {
   const [dragging, setDragging] = useState(false)
+  const [pasteError, setPasteError] = useState<string | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const readFile = (file: File) => {
@@ -126,13 +344,48 @@ function DropZone({ onLoad }: { onLoad: (text: string, name: string) => void }) 
     [onLoad]
   )
 
+  const handlePaste = async () => {
+    setPasteError(null)
+    try {
+      const text = await navigator.clipboard.readText()
+      if (!text.trim()) {
+        setPasteError("Clipboard is empty")
+        return
+      }
+      onLoad(text, "clipboard")
+    } catch {
+      setPasteError("Clipboard access denied — try Cmd+V in the page")
+    }
+  }
+
+  // Also handle global Cmd+V / Ctrl+V on the drop-zone page
+  useEffect(() => {
+    const onPaste = (e: ClipboardEvent) => {
+      // ignore if a text input is focused
+      const target = e.target as HTMLElement
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      )
+        return
+      const text = e.clipboardData?.getData("text") ?? ""
+      if (text.trim()) onLoad(text, "clipboard")
+    }
+    document.addEventListener("paste", onPaste)
+    return () => document.removeEventListener("paste", onPaste)
+  }, [onLoad])
+
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-16 transition-colors",
+        "flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-12 transition-colors",
         dragging ? "border-primary bg-primary/5" : "border-border bg-muted/20"
       )}
-      onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
+      onDragOver={(e) => {
+        e.preventDefault()
+        setDragging(true)
+      }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
     >
@@ -140,13 +393,33 @@ function DropZone({ onLoad }: { onLoad: (text: string, name: string) => void }) 
         <FileText className="h-8 w-8 text-muted-foreground" />
       </div>
       <div className="text-center">
-        <p className="text-sm font-medium">Drop a <code>.jsonl</code> file here</p>
-        <p className="mt-1 text-xs text-muted-foreground">or click to browse</p>
+        <p className="text-sm font-medium">
+          Drop a <code>.jsonl</code> file here
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          or choose an option below
+        </p>
       </div>
-      <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
-        <Upload className="mr-2 h-4 w-4" />
-        Choose file
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload className="mr-2 h-4 w-4" />
+          Choose file
+        </Button>
+        <Button variant="outline" size="sm" onClick={handlePaste}>
+          <Clipboard className="mr-2 h-4 w-4" />
+          Paste logs
+        </Button>
+      </div>
+      {pasteError && (
+        <p className="text-xs text-destructive">{pasteError}</p>
+      )}
+      <p className="text-xs text-muted-foreground/60">
+        or press <kbd className="rounded border border-border px-1 py-0.5 font-mono text-[10px]">⌘V</kbd> anywhere on the page
+      </p>
       <input
         ref={inputRef}
         type="file"
@@ -166,14 +439,24 @@ function DropZone({ onLoad }: { onLoad: (text: string, name: string) => void }) 
 // ExpandedRow
 // ---------------------------------------------------------------------------
 
-function ExpandedRow({ entry, colSpan }: { entry: LogEntry; colSpan: number }) {
+function ExpandedRow({
+  entry,
+  colSpan,
+  onViewTrace,
+}: {
+  entry: LogEntry
+  colSpan: number
+  onViewTrace: () => void
+}) {
   const [copied, setCopied] = useState(false)
+  const traces = extractStackTraces(entry)
 
   const json = JSON.stringify(entry, null, 2)
 
   const handleCopy = () => {
-    // strip the synthetic `id` field we added
-    const rest = Object.fromEntries(Object.entries(entry).filter(([k]) => k !== "id"))
+    const rest = Object.fromEntries(
+      Object.entries(entry).filter(([k]) => k !== "id")
+    )
     void navigator.clipboard.writeText(JSON.stringify(rest, null, 2)).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 1500)
@@ -184,23 +467,48 @@ function ExpandedRow({ entry, colSpan }: { entry: LogEntry; colSpan: number }) {
     <TableRow className="bg-muted/30 hover:bg-muted/30">
       <TableCell colSpan={colSpan} className="p-0">
         <div className="relative">
-          <Button
-            size="sm"
-            variant="ghost"
-            className="absolute right-3 top-3 z-10 h-7 gap-1 text-xs"
-            onClick={handleCopy}
-          >
-            {copied ? (
-              <><Check className="h-3 w-3 text-green-400" /> Copied</>
-            ) : (
-              <><Copy className="h-3 w-3" /> Copy</>
+          {/* Action buttons */}
+          <div className="absolute right-3 top-3 z-10 flex gap-1.5">
+            {traces.length > 0 && (
+              <Button
+                size="sm"
+                variant="secondary"
+                className="h-7 gap-1 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onViewTrace()
+                }}
+              >
+                <Terminal className="h-3 w-3" />
+                Stack Trace
+              </Button>
             )}
-          </Button>
-          <ScrollArea className="max-h-72">
-            <pre className="overflow-auto p-4 pt-10 text-xs leading-relaxed text-muted-foreground">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 gap-1 text-xs"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleCopy()
+              }}
+            >
+              {copied ? (
+                <>
+                  <Check className="h-3 w-3 text-green-400" /> Copied
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3 w-3" /> Copy
+                </>
+              )}
+            </Button>
+          </div>
+          {/* Fixed-height scrollable pre — no ScrollArea inside table */}
+          <div className="max-h-64 overflow-y-auto overflow-x-auto">
+            <pre className="p-4 pt-12 text-xs leading-relaxed text-muted-foreground whitespace-pre">
               {json}
             </pre>
-          </ScrollArea>
+          </div>
         </div>
       </TableCell>
     </TableRow>
@@ -219,6 +527,7 @@ export function LogViewer() {
   const [sortCol, setSortCol] = useState<SortCol>("time")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
   const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [traceEntry, setTraceEntry] = useState<LogEntry | null>(null)
 
   const handleLoad = useCallback((text: string, name: string) => {
     const parsed = parseJsonl(text)
@@ -229,6 +538,24 @@ export function LogViewer() {
     setLevelFilter("all")
   }, [])
 
+  // Global paste handler when logs are already loaded
+  useEffect(() => {
+    if (!fileName) return // handled by DropZone
+    const onPaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.isContentEditable
+      )
+        return
+      const text = e.clipboardData?.getData("text") ?? ""
+      if (text.trim()) handleLoad(text, "clipboard")
+    }
+    document.addEventListener("paste", onPaste)
+    return () => document.removeEventListener("paste", onPaste)
+  }, [fileName, handleLoad])
+
   const handleSort = (col: SortCol) => {
     if (sortCol === col) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"))
@@ -238,7 +565,15 @@ export function LogViewer() {
     }
   }
 
-  // Level counts for badge labels
+  const handlePasteFromHeader = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (text.trim()) handleLoad(text, "clipboard")
+    } catch {
+      /* ignore */
+    }
+  }
+
   const levelCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const entry of logs) {
@@ -248,7 +583,6 @@ export function LogViewer() {
     return counts
   }, [logs])
 
-  // Filter + sort
   const visible = useMemo(() => {
     let filtered = logs
     if (levelFilter !== "all") {
@@ -295,15 +629,30 @@ export function LogViewer() {
         <span className="text-xs text-muted-foreground">
           {visible.length} / {logs.length} entries
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="ml-auto h-7 w-7 shrink-0"
-          title="Close file"
-          onClick={() => { setFileName(null); setLogs([]) }}
-        >
-          <X className="h-4 w-4" />
-        </Button>
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1.5 text-xs"
+            title="Paste logs from clipboard"
+            onClick={handlePasteFromHeader}
+          >
+            <Clipboard className="h-3.5 w-3.5" />
+            Paste
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0"
+            title="Close file"
+            onClick={() => {
+              setFileName(null)
+              setLogs([])
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
       {/* Toolbar */}
@@ -321,9 +670,7 @@ export function LogViewer() {
               )}
             >
               {lvl.toUpperCase()}
-              <span className="rounded bg-current/10 px-1 opacity-70">
-                {count}
-              </span>
+              <span className="rounded bg-current/10 px-1 opacity-70">{count}</span>
             </button>
           )
         })}
@@ -357,7 +704,12 @@ export function LogViewer() {
                 onClick={() => handleSort("time")}
               >
                 <span className="flex items-center">
-                  Time <SortIcon col="time" sortCol={sortCol} sortDir={sortDir} />
+                  Time{" "}
+                  <SortIcon
+                    col="time"
+                    sortCol={sortCol}
+                    sortDir={sortDir}
+                  />
                 </span>
               </TableHead>
               <TableHead
@@ -365,7 +717,12 @@ export function LogViewer() {
                 onClick={() => handleSort("level")}
               >
                 <span className="flex items-center">
-                  Level <SortIcon col="level" sortCol={sortCol} sortDir={sortDir} />
+                  Level{" "}
+                  <SortIcon
+                    col="level"
+                    sortCol={sortCol}
+                    sortDir={sortDir}
+                  />
                 </span>
               </TableHead>
               <TableHead className="text-xs">Message</TableHead>
@@ -375,7 +732,10 @@ export function LogViewer() {
           <TableBody>
             {visible.length === 0 && (
               <TableRow>
-                <TableCell colSpan={4} className="py-16 text-center text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={4}
+                  className="py-16 text-center text-sm text-muted-foreground"
+                >
                   No log entries match the current filter.
                 </TableCell>
               </TableRow>
@@ -384,6 +744,8 @@ export function LogViewer() {
               const expanded = expandedId === entry.id
               const preview = messagePreview(entry)
               const level = (entry.level ?? "unknown").toLowerCase()
+              const hasTrace = extractStackTraces(entry).length > 0
+
               return (
                 <>
                   <TableRow
@@ -400,25 +762,50 @@ export function LogViewer() {
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={cn("text-[10px] font-semibold uppercase", levelVariant(level))}
+                        className={cn(
+                          "text-[10px] font-semibold uppercase",
+                          levelVariant(level)
+                        )}
                       >
                         {level}
                       </Badge>
                     </TableCell>
-                    <TableCell className="max-w-0 truncate">
-                      <span className="block truncate" title={preview}>
-                        {preview}
-                      </span>
+                    <TableCell className="max-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        {hasTrace && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5 shrink-0 text-muted-foreground hover:text-foreground"
+                            title="View stack trace"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setTraceEntry(entry)
+                            }}
+                          >
+                            <Terminal className="h-3 w-3" />
+                          </Button>
+                        )}
+                        <span className="block truncate" title={preview}>
+                          {preview}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {expanded
-                        ? <ChevronDown className="h-3.5 w-3.5" />
-                        : <ChevronRight className="h-3.5 w-3.5" />
-                      }
+                      {expanded ? (
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      )}
                     </TableCell>
                   </TableRow>
                   {expanded && (
-                    <ExpandedRow key={`exp-${entry.id}`} entry={entry} colSpan={4} />
+                    <ExpandedRow
+                      key={`exp-${entry.id}`}
+                      entry={entry}
+                      colSpan={4}
+                      onViewTrace={() => setTraceEntry(entry)}
+                    />
                   )}
                 </>
               )
@@ -426,6 +813,13 @@ export function LogViewer() {
           </TableBody>
         </Table>
       </ScrollArea>
+
+      {/* Stack Trace Modal */}
+      <StackTraceModal
+        entry={traceEntry}
+        onClose={() => setTraceEntry(null)}
+      />
     </div>
   )
 }
+
