@@ -26,6 +26,8 @@ import {
   Clipboard,
   Copy,
   FileText,
+  Maximize2,
+  Minimize2,
   Terminal,
   Upload,
   X,
@@ -37,7 +39,7 @@ import { cn } from "@/lib/utils"
 // ---------------------------------------------------------------------------
 
 type SortCol = "time" | "level"
-type SortDir = "asc" | "desc"
+type SortDir = "asc" | "desc" | "none"
 type LevelFilter = "all" | LogLevel
 
 const LEVELS: LevelFilter[] = ["all", "error", "warn", "info"]
@@ -196,6 +198,53 @@ function StackTraceLine({ line }: { line: string }) {
   )
 }
 
+// ---------------------------------------------------------------------------
+// JSON syntax highlighting
+// ---------------------------------------------------------------------------
+
+// Tokenise a JSON string into coloured spans without any external library.
+const JSON_RE = /(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)|( *"(?:[^"\\]|\\.)*")( *:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}\[\],])/g
+
+function JsonHighlight({ json }: { json: string }) {
+  const parts: React.ReactNode[] = []
+  let last = 0
+
+  for (const m of json.matchAll(JSON_RE)) {
+    const start = m.index!
+    // plain text between matches (whitespace / newlines)
+    if (start > last) parts.push(json.slice(last, start))
+    last = start + m[0].length
+
+    const [full, , , str, colon, keyword, num, punct] = m
+
+    if (str !== undefined) {
+      if (colon) {
+        // object key
+        parts.push(<span key={last} className="text-sky-300">{str}</span>)
+        parts.push(<span key={last + "c"} className="text-muted-foreground">{colon}</span>)
+      } else {
+        // string value
+        parts.push(<span key={last} className="text-emerald-300">{full}</span>)
+      }
+    } else if (keyword !== undefined) {
+      parts.push(<span key={last} className="text-amber-400">{full}</span>)
+    } else if (num !== undefined) {
+      parts.push(<span key={last} className="text-yellow-300">{full}</span>)
+    } else if (punct !== undefined) {
+      parts.push(<span key={last} className="text-muted-foreground/70">{full}</span>)
+    } else {
+      parts.push(full)
+    }
+  }
+  if (last < json.length) parts.push(json.slice(last))
+
+  return (
+    <pre className="overflow-x-auto rounded-md bg-black/40 p-4 text-xs leading-relaxed font-mono whitespace-pre">
+      {parts}
+    </pre>
+  )
+}
+
 function StackTraceView({ trace }: { trace: string }) {
   const lines = trace.split("\n")
   return (
@@ -219,10 +268,10 @@ function SortIcon({
   sortDir,
 }: {
   col: SortCol
-  sortCol: SortCol
+  sortCol: SortCol | null
   sortDir: SortDir
 }) {
-  if (sortCol !== col) return <ChevronsUpDown className="ml-1 h-3 w-3 opacity-40" />
+  if (sortCol !== col || sortDir === "none") return <ChevronsUpDown className="ml-1 h-3 w-3 opacity-40" />
   return sortDir === "asc" ? (
     <ChevronUp className="ml-1 h-3 w-3" />
   ) : (
@@ -456,10 +505,8 @@ function ExpandedRow({
 
         {/* Panel content */}
         {view === "json" ? (
-          <div className="max-h-64 overflow-y-auto overflow-x-auto" onClick={(e) => e.stopPropagation()}>
-            <pre className="p-4 text-xs leading-relaxed text-muted-foreground whitespace-pre">
-              {json}
-            </pre>
+          <div className="max-h-72 overflow-y-auto overflow-x-auto p-4" onClick={(e) => e.stopPropagation()}>
+            <JsonHighlight json={json} />
           </div>
         ) : (
           <div className="max-h-96 overflow-y-auto overflow-x-auto p-4 space-y-4" onClick={(e) => e.stopPropagation()}>
@@ -489,8 +536,9 @@ export function LogViewer() {
   const [fileName, setFileName] = useState<string | null>(null)
   const [levelFilter, setLevelFilter] = useState<LevelFilter>("all")
   const [search, setSearch] = useState("")
-  const [sortCol, setSortCol] = useState<SortCol>("time")
+  const [sortCol, setSortCol] = useState<SortCol | null>("time")
   const [sortDir, setSortDir] = useState<SortDir>("asc")
+  const [fullscreen, setFullscreen] = useState(false)
   const [expandedId, setExpandedId] = useState<number | null>(null)
 
   const handleLoad = useCallback((text: string, name: string) => {
@@ -521,8 +569,15 @@ export function LogViewer() {
   }, [fileName, handleLoad])
 
   const handleSort = (col: SortCol) => {
-    if (sortCol === col) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"))
+    if (sortCol !== col) {
+      setSortCol(col)
+      setSortDir("asc")
+    } else if (sortDir === "asc") {
+      setSortDir("desc")
+    } else if (sortDir === "desc") {
+      // third click — reset
+      setSortCol(null)
+      setSortDir("none")
     } else {
       setSortCol(col)
       setSortDir("asc")
@@ -557,6 +612,7 @@ export function LogViewer() {
     if (search) {
       filtered = filtered.filter((e) => matchesSearch(e, search))
     }
+    if (!sortCol || sortDir === "none") return filtered
     return [...filtered].sort((a, b) => {
       let cmp = 0
       if (sortCol === "time") {
@@ -585,7 +641,7 @@ export function LogViewer() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className={cn("flex flex-col bg-background", fullscreen ? "fixed inset-0 z-50" : "h-screen")}>
       {/* Header */}
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
         <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
@@ -603,6 +659,17 @@ export function LogViewer() {
           >
             <Clipboard className="h-3.5 w-3.5" />
             Paste
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0"
+            title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
+            onClick={() => setFullscreen((f) => !f)}
+          >
+            {fullscreen
+              ? <Minimize2 className="h-4 w-4" />
+              : <Maximize2 className="h-4 w-4" />}
           </Button>
           <Button
             variant="ghost"
