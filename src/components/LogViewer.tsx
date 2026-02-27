@@ -667,7 +667,7 @@ export function LogViewer() {
       <header className="flex items-center gap-3 border-b border-border px-4 py-3">
         <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
         <span className="truncate text-sm font-medium">{fileName}</span>
-        <span className="text-xs text-muted-foreground">
+        <span className="hidden sm:inline text-xs text-muted-foreground">
           {visible.length} / {logs.length} entries
         </span>
         <div className="ml-auto flex items-center gap-1">
@@ -679,7 +679,7 @@ export function LogViewer() {
             onClick={handlePasteFromHeader}
           >
             <Clipboard className="h-3.5 w-3.5" />
-            Paste
+            <span className="hidden sm:inline">Paste</span>
           </Button>
           <Button
             variant="ghost"
@@ -715,18 +715,18 @@ export function LogViewer() {
             </button>
           )
         })}
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
           <Input
             placeholder="Search logs…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8 w-56 text-xs"
+            className="h-8 flex-1 text-xs sm:w-56 sm:flex-none"
           />
           {search && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 shrink-0"
               onClick={() => setSearch("")}
             >
               <X className="h-3.5 w-3.5" />
@@ -741,7 +741,7 @@ export function LogViewer() {
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead
-                className="w-44 cursor-pointer select-none whitespace-nowrap text-xs"
+                className="hidden sm:table-cell w-44 cursor-pointer select-none whitespace-nowrap text-xs"
                 onClick={() => handleSort("time")}
               >
                 <span className="flex items-center">
@@ -796,7 +796,7 @@ export function LogViewer() {
                     )}
                     onClick={() => setExpandedId(expanded ? null : entry.id)}
                   >
-                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                    <TableCell className="hidden sm:table-cell whitespace-nowrap text-muted-foreground">
                       {formatTime(entry)}
                     </TableCell>
                     <TableCell>
@@ -811,6 +811,9 @@ export function LogViewer() {
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-0">
+                      <span className="sm:hidden block text-[10px] text-muted-foreground mb-0.5">
+                        {formatTime(entry)}
+                      </span>
                       <span className="block truncate" title={preview}>
                         {preview}
                       </span>
