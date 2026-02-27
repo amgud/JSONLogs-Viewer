@@ -248,7 +248,7 @@ function JsonHighlight({ json }: { json: string }) {
 function StackTraceView({ trace }: { trace: string }) {
   const lines = trace.split("\n")
   return (
-    <pre className="overflow-x-auto rounded-md bg-black/40 p-4 text-xs leading-6 font-mono">
+    <pre className="overflow-x-auto rounded-md bg-black/40 p-4 text-xs leading-6 font-mono whitespace-pre">
       {lines.map((line, i) => (
         <div key={i}>
           <StackTraceLine line={line} />
@@ -527,7 +527,7 @@ function ExpandedRow({
   return (
     <>
       <TableRow className="bg-muted/30 hover:bg-muted/30">
-        <TableCell colSpan={colSpan} className="p-0">
+        <TableCell colSpan={colSpan} className="p-0 max-w-0 w-full">
           {tabBar(false)}
           {panelContent()}
         </TableCell>
