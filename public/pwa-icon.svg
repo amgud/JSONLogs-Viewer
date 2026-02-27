@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#1e293b" />
+  <!-- Document body -->
+  <rect x="120" y="80" width="272" height="352" rx="16" fill="#334155" />
+  <!-- Dog-ear fold -->
+  <polygon points="320,80 392,152 320,152" fill="#0f172a" />
+  <rect
+    x="320"
+    y="80"
+    width="72"
+    height="72"
+    rx="0"
+    fill="#475569"
+    opacity="0.4"
+  />
+  <!-- Log lines -->
+  <rect x="152" y="168" width="208" height="14" rx="7" fill="#38bdf8" />
+  <rect x="152" y="202" width="160" height="14" rx="7" fill="#94a3b8" />
+  <rect x="152" y="236" width="184" height="14" rx="7" fill="#94a3b8" />
+  <rect x="152" y="270" width="120" height="14" rx="7" fill="#f87171" />
+  <rect x="152" y="304" width="176" height="14" rx="7" fill="#94a3b8" />
+  <rect x="152" y="338" width="140" height="14" rx="7" fill="#4ade80" />
+</svg>
