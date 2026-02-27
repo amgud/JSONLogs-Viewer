@@ -129,12 +129,12 @@ export function LogViewer() {
 
   if (!fileName) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background p-8">
+      <div className="bg-background flex min-h-screen items-center justify-center p-8">
         <div className="w-full max-w-lg">
           <h1 className="mb-2 text-center text-2xl font-semibold tracking-tight">
             BFF Log Viewer
           </h1>
-          <p className="mb-8 text-center text-sm text-muted-foreground">
+          <p className="text-muted-foreground mb-8 text-center text-sm">
             Load a <code>.jsonl</code> log file to get started
           </p>
           <DropZone onLoad={handleLoad} />
@@ -144,12 +144,12 @@ export function LogViewer() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-background">
+    <div className="bg-background flex h-screen flex-col">
       {/* Header */}
-      <header className="flex items-center gap-3 border-b border-border px-4 py-3">
-        <FileText className="h-5 w-5 shrink-0 text-muted-foreground" />
+      <header className="border-border flex items-center gap-3 border-b px-4 py-3">
+        <FileText className="text-muted-foreground h-5 w-5 shrink-0" />
         <span className="truncate text-sm font-medium">{fileName}</span>
-        <span className="hidden sm:inline text-xs text-muted-foreground">
+        <span className="text-muted-foreground hidden text-xs sm:inline">
           {visible.length} / {logs.length} entries
         </span>
         <div className="ml-auto flex items-center gap-1">
@@ -179,7 +179,7 @@ export function LogViewer() {
       </header>
 
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2">
+      <div className="border-border flex flex-wrap items-center gap-2 border-b px-4 py-2">
         {LEVELS.map((lvl) => {
           const count = lvl === 'all' ? logs.length : (levelCounts[lvl] ?? 0);
           const active = levelFilter === lvl;
@@ -199,22 +199,21 @@ export function LogViewer() {
             </button>
           );
         })}
-        <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
+        <div className="relative w-full sm:ml-auto sm:w-auto">
           <Input
             placeholder="Search logs…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8 flex-1 text-xs sm:w-56 sm:flex-none"
+            className={cn('h-8 w-full text-xs sm:w-56', search && 'pr-7')}
           />
           {search && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
+            <button
+              className="text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex cursor-pointer items-center px-2"
               onClick={() => setSearch('')}
+              tabIndex={-1}
             >
               <X className="h-3.5 w-3.5" />
-            </Button>
+            </button>
           )}
         </div>
       </div>
@@ -225,7 +224,7 @@ export function LogViewer() {
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead
-                className="hidden sm:table-cell w-44 cursor-pointer select-none whitespace-nowrap text-xs"
+                className="hidden w-44 cursor-pointer text-xs whitespace-nowrap select-none sm:table-cell"
                 onClick={() => handleSort('time')}
               >
                 <span className="flex items-center">
@@ -234,7 +233,7 @@ export function LogViewer() {
                 </span>
               </TableHead>
               <TableHead
-                className="w-24 cursor-pointer select-none text-xs"
+                className="w-24 cursor-pointer text-xs select-none"
                 onClick={() => handleSort('level')}
               >
                 <span className="flex items-center">
@@ -251,7 +250,7 @@ export function LogViewer() {
               <TableRow>
                 <TableCell
                   colSpan={4}
-                  className="py-16 text-center text-sm text-muted-foreground"
+                  className="text-muted-foreground py-16 text-center text-sm"
                 >
                   No log entries match the current filter.
                 </TableCell>
@@ -268,11 +267,11 @@ export function LogViewer() {
                     key={`row-${entry.id}`}
                     className={cn(
                       'cursor-pointer font-mono text-xs',
-                      expanded && 'border-b-0 bg-muted/20',
+                      expanded && 'bg-muted/20 border-b-0',
                     )}
                     onClick={() => setExpandedId(expanded ? null : entry.id)}
                   >
-                    <TableCell className="hidden sm:table-cell whitespace-nowrap text-muted-foreground">
+                    <TableCell className="text-muted-foreground hidden whitespace-nowrap sm:table-cell">
                       {formatTime(entry)}
                     </TableCell>
                     <TableCell>
@@ -287,7 +286,7 @@ export function LogViewer() {
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-0">
-                      <span className="sm:hidden block text-[10px] text-muted-foreground mb-0.5">
+                      <span className="text-muted-foreground mb-0.5 block text-[10px] sm:hidden">
                         {formatTime(entry)}
                       </span>
                       <span className="block truncate" title={preview}>
