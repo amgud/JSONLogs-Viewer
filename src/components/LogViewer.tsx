@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from "react"
+import React, { useState, useCallback, useMemo, useRef, useEffect } from "react"
 import {
   parseJsonl,
   messagePreview,
@@ -436,7 +436,6 @@ function ExpandedRow({
     })
   }
 
-  // Close fullscreen on Escape
   useEffect(() => {
     if (!fullscreen) return
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setFullscreen(false) }
@@ -444,7 +443,7 @@ function ExpandedRow({
     return () => window.removeEventListener("keydown", onKey)
   }, [fullscreen])
 
-  const TabBar = ({ inFullscreen }: { inFullscreen: boolean }) => (
+  const tabBar = (inFullscreen: boolean) => (
     <div
       className="flex items-center gap-1 border-b border-border px-3 pt-2 shrink-0"
       onClick={(e) => e.stopPropagation()}
@@ -475,19 +474,17 @@ function ExpandedRow({
         </button>
       )}
       <div className="ml-auto flex items-center gap-1 pb-1">
-        {/* Copy */}
         {view === "json" ? (
-          <Button size="sm" variant="ghost" className="h-6 gap-1 text-xs" onClick={handleCopyJson}>
+          <Button size="sm" variant="ghost" className="h-6 gap-1 text-xs" onClick={(e) => { e.stopPropagation(); handleCopyJson() }}>
             {copied ? <><Check className="h-3 w-3 text-green-400" />Copied</> : <><Copy className="h-3 w-3" />Copy JSON</>}
           </Button>
         ) : (
           traces.map(({ trace }, i) => (
-            <Button key={i} size="sm" variant="ghost" className="h-6 gap-1 text-xs" onClick={() => handleCopyTrace(trace)}>
+            <Button key={i} size="sm" variant="ghost" className="h-6 gap-1 text-xs" onClick={(e) => { e.stopPropagation(); handleCopyTrace(trace) }}>
               {copied ? <><Check className="h-3 w-3 text-green-400" />Copied</> : <><Copy className="h-3 w-3" />Copy</>}
             </Button>
           ))
         )}
-        {/* Fullscreen toggle */}
         <Button
           size="icon"
           variant="ghost"
@@ -495,15 +492,13 @@ function ExpandedRow({
           title={inFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"}
           onClick={(e) => { e.stopPropagation(); setFullscreen((f) => !f) }}
         >
-          {inFullscreen
-            ? <Minimize2 className="h-3.5 w-3.5" />
-            : <Maximize2 className="h-3.5 w-3.5" />}
+          {inFullscreen ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
         </Button>
       </div>
     </div>
   )
 
-  const PanelContent = ({ grow }: { grow?: boolean }) => (
+  const panelContent = (grow?: boolean) =>
     view === "json" ? (
       <div
         className={cn("overflow-y-auto overflow-x-auto p-4", grow ? "flex-1" : "max-h-72")}
@@ -528,27 +523,24 @@ function ExpandedRow({
         ))}
       </div>
     )
-  )
 
   return (
     <>
       <TableRow className="bg-muted/30 hover:bg-muted/30">
         <TableCell colSpan={colSpan} className="p-0">
-          <TabBar inFullscreen={false} />
-          <PanelContent />
+          {tabBar(false)}
+          {panelContent()}
         </TableCell>
       </TableRow>
-
-      {/* Fullscreen overlay */}
       {fullscreen && (
         <tr>
           <td colSpan={colSpan} className="p-0">
             <div
-              className="fixed inset-0 z-50 flex flex-col bg-background border border-border shadow-2xl"
+              className="fixed inset-0 z-50 flex flex-col bg-background"
               onClick={(e) => e.stopPropagation()}
             >
-              <TabBar inFullscreen={true} />
-              <PanelContent grow />
+              {tabBar(true)}
+              {panelContent(true)}
             </div>
           </td>
         </tr>
@@ -795,7 +787,7 @@ export function LogViewer() {
               const level = (entry.level ?? "unknown").toLowerCase()
 
               return (
-                <>
+                <React.Fragment key={entry.id}>
                   <TableRow
                     key={`row-${entry.id}`}
                     className={cn(
@@ -838,7 +830,7 @@ export function LogViewer() {
                       colSpan={4}
                     />
                   )}
-                </>
+                </React.Fragment>
               )
             })}
           </TableBody>
