@@ -220,7 +220,7 @@ export function LogViewer() {
 
       {/* Table */}
       <ScrollArea className="flex-1">
-        <Table>
+        <Table className="table-fixed">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead
