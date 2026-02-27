@@ -1,9 +1,9 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react"
-import { parseJsonl, messagePreview, type LogEntry } from "@/lib/parseJsonl"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { parseJsonl, messagePreview, type LogEntry } from '@/lib/parseJsonl';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Table,
   TableBody,
@@ -11,9 +11,15 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { ChevronDown, ChevronRight, Clipboard, FileText, X } from "lucide-react"
-import { cn } from "@/lib/utils"
+} from '@/components/ui/table';
+import {
+  ChevronDown,
+  ChevronRight,
+  Clipboard,
+  FileText,
+  X,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
 import {
   type SortCol,
   type SortDir,
@@ -24,103 +30,102 @@ import {
   formatTime,
   entryTimestamp,
   matchesSearch,
-} from "./log-viewer/types"
-import { SortIcon } from "./log-viewer/SortIcon"
-import { DropZone } from "./log-viewer/DropZone"
-import { ExpandedRow } from "./log-viewer/ExpandedRow"
-
+} from './log-viewer/types';
+import { SortIcon } from './log-viewer/SortIcon';
+import { DropZone } from './log-viewer/DropZone';
+import { ExpandedRow } from './log-viewer/ExpandedRow';
 
 export function LogViewer() {
-  const [logs, setLogs] = useState<LogEntry[]>([])
-  const [fileName, setFileName] = useState<string | null>(null)
-  const [levelFilter, setLevelFilter] = useState<LevelFilter>("all")
-  const [search, setSearch] = useState("")
-  const [sortCol, setSortCol] = useState<SortCol | null>("time")
-  const [sortDir, setSortDir] = useState<SortDir>("asc")
-  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
+  const [search, setSearch] = useState('');
+  const [sortCol, setSortCol] = useState<SortCol | null>('time');
+  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const handleLoad = useCallback((text: string, name: string) => {
-    const parsed = parseJsonl(text)
-    setLogs(parsed)
-    setFileName(name)
-    setExpandedId(null)
-    setSearch("")
-    setLevelFilter("all")
-  }, [])
+    const parsed = parseJsonl(text);
+    setLogs(parsed);
+    setFileName(name);
+    setExpandedId(null);
+    setSearch('');
+    setLevelFilter('all');
+  }, []);
 
   // Global paste handler when logs are already loaded
   useEffect(() => {
-    if (!fileName) return // handled by DropZone
+    if (!fileName) return; // handled by DropZone
     const onPaste = (e: ClipboardEvent) => {
-      const target = e.target as HTMLElement
+      const target = e.target as HTMLElement;
       if (
-        target.tagName === "INPUT" ||
-        target.tagName === "TEXTAREA" ||
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
         target.isContentEditable
       )
-        return
-      const text = e.clipboardData?.getData("text") ?? ""
-      if (text.trim()) handleLoad(text, "clipboard")
-    }
-    document.addEventListener("paste", onPaste)
-    return () => document.removeEventListener("paste", onPaste)
-  }, [fileName, handleLoad])
+        return;
+      const text = e.clipboardData?.getData('text') ?? '';
+      if (text.trim()) handleLoad(text, 'clipboard');
+    };
+    document.addEventListener('paste', onPaste);
+    return () => document.removeEventListener('paste', onPaste);
+  }, [fileName, handleLoad]);
 
   const handleSort = (col: SortCol) => {
     if (sortCol !== col) {
-      setSortCol(col)
-      setSortDir("asc")
-    } else if (sortDir === "asc") {
-      setSortDir("desc")
-    } else if (sortDir === "desc") {
+      setSortCol(col);
+      setSortDir('asc');
+    } else if (sortDir === 'asc') {
+      setSortDir('desc');
+    } else if (sortDir === 'desc') {
       // third click — reset
-      setSortCol(null)
-      setSortDir("none")
+      setSortCol(null);
+      setSortDir('none');
     } else {
-      setSortCol(col)
-      setSortDir("asc")
+      setSortCol(col);
+      setSortDir('asc');
     }
-  }
+  };
 
   const handlePasteFromHeader = async () => {
     try {
-      const text = await navigator.clipboard.readText()
-      if (text.trim()) handleLoad(text, "clipboard")
+      const text = await navigator.clipboard.readText();
+      if (text.trim()) handleLoad(text, 'clipboard');
     } catch {
       /* ignore */
     }
-  }
+  };
 
   const levelCounts = useMemo(() => {
-    const counts: Record<string, number> = {}
+    const counts: Record<string, number> = {};
     for (const entry of logs) {
-      const l = (entry.level ?? "unknown").toLowerCase()
-      counts[l] = (counts[l] ?? 0) + 1
+      const l = (entry.level ?? 'unknown').toLowerCase();
+      counts[l] = (counts[l] ?? 0) + 1;
     }
-    return counts
-  }, [logs])
+    return counts;
+  }, [logs]);
 
   const visible = useMemo(() => {
-    let filtered = logs
-    if (levelFilter !== "all") {
+    let filtered = logs;
+    if (levelFilter !== 'all') {
       filtered = filtered.filter(
-        (e) => (e.level ?? "").toLowerCase() === levelFilter.toLowerCase()
-      )
+        (e) => (e.level ?? '').toLowerCase() === levelFilter.toLowerCase(),
+      );
     }
     if (search) {
-      filtered = filtered.filter((e) => matchesSearch(e, search))
+      filtered = filtered.filter((e) => matchesSearch(e, search));
     }
-    if (!sortCol || sortDir === "none") return filtered
+    if (!sortCol || sortDir === 'none') return filtered;
     return [...filtered].sort((a, b) => {
-      let cmp = 0
-      if (sortCol === "time") {
-        cmp = entryTimestamp(a) - entryTimestamp(b)
+      let cmp = 0;
+      if (sortCol === 'time') {
+        cmp = entryTimestamp(a) - entryTimestamp(b);
       } else {
-        cmp = (a.level ?? "").localeCompare(b.level ?? "")
+        cmp = (a.level ?? '').localeCompare(b.level ?? '');
       }
-      return sortDir === "asc" ? cmp : -cmp
-    })
-  }, [logs, levelFilter, search, sortCol, sortDir])
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+  }, [logs, levelFilter, search, sortCol, sortDir]);
 
   if (!fileName) {
     return (
@@ -135,7 +140,7 @@ export function LogViewer() {
           <DropZone onLoad={handleLoad} />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -164,8 +169,8 @@ export function LogViewer() {
             className="h-7 w-7 shrink-0"
             title="Close file"
             onClick={() => {
-              setFileName(null)
-              setLogs([])
+              setFileName(null);
+              setLogs([]);
             }}
           >
             <X className="h-4 w-4" />
@@ -176,21 +181,23 @@ export function LogViewer() {
       {/* Toolbar */}
       <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2">
         {LEVELS.map((lvl) => {
-          const count = lvl === "all" ? logs.length : (levelCounts[lvl] ?? 0)
-          const active = levelFilter === lvl
+          const count = lvl === 'all' ? logs.length : (levelCounts[lvl] ?? 0);
+          const active = levelFilter === lvl;
           return (
             <button
               key={lvl}
               onClick={() => setLevelFilter(lvl)}
               className={cn(
-                "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
-                levelFilterVariant(lvl, active)
+                'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                levelFilterVariant(lvl, active),
               )}
             >
               {lvl.toUpperCase()}
-              <span className="rounded bg-current/10 px-1 opacity-70">{count}</span>
+              <span className="rounded bg-current/10 px-1 opacity-70">
+                {count}
+              </span>
             </button>
-          )
+          );
         })}
         <div className="flex w-full items-center gap-2 sm:ml-auto sm:w-auto">
           <Input
@@ -204,7 +211,7 @@ export function LogViewer() {
               variant="ghost"
               size="icon"
               className="h-8 w-8 shrink-0"
-              onClick={() => setSearch("")}
+              onClick={() => setSearch('')}
             >
               <X className="h-3.5 w-3.5" />
             </Button>
@@ -219,28 +226,20 @@ export function LogViewer() {
             <TableRow className="hover:bg-transparent">
               <TableHead
                 className="hidden sm:table-cell w-44 cursor-pointer select-none whitespace-nowrap text-xs"
-                onClick={() => handleSort("time")}
+                onClick={() => handleSort('time')}
               >
                 <span className="flex items-center">
-                  Time{" "}
-                  <SortIcon
-                    col="time"
-                    sortCol={sortCol}
-                    sortDir={sortDir}
-                  />
+                  Time{' '}
+                  <SortIcon col="time" sortCol={sortCol} sortDir={sortDir} />
                 </span>
               </TableHead>
               <TableHead
                 className="w-24 cursor-pointer select-none text-xs"
-                onClick={() => handleSort("level")}
+                onClick={() => handleSort('level')}
               >
                 <span className="flex items-center">
-                  Level{" "}
-                  <SortIcon
-                    col="level"
-                    sortCol={sortCol}
-                    sortDir={sortDir}
-                  />
+                  Level{' '}
+                  <SortIcon col="level" sortCol={sortCol} sortDir={sortDir} />
                 </span>
               </TableHead>
               <TableHead className="text-xs">Message</TableHead>
@@ -259,17 +258,17 @@ export function LogViewer() {
               </TableRow>
             )}
             {visible.map((entry) => {
-              const expanded = expandedId === entry.id
-              const preview = messagePreview(entry)
-              const level = (entry.level ?? "unknown").toLowerCase()
+              const expanded = expandedId === entry.id;
+              const preview = messagePreview(entry);
+              const level = (entry.level ?? 'unknown').toLowerCase();
 
               return (
                 <React.Fragment key={entry.id}>
                   <TableRow
                     key={`row-${entry.id}`}
                     className={cn(
-                      "cursor-pointer font-mono text-xs",
-                      expanded && "border-b-0 bg-muted/20"
+                      'cursor-pointer font-mono text-xs',
+                      expanded && 'border-b-0 bg-muted/20',
                     )}
                     onClick={() => setExpandedId(expanded ? null : entry.id)}
                   >
@@ -280,8 +279,8 @@ export function LogViewer() {
                       <Badge
                         variant="outline"
                         className={cn(
-                          "text-[10px] font-semibold uppercase",
-                          levelVariant(level)
+                          'text-[10px] font-semibold uppercase',
+                          levelVariant(level),
                         )}
                       >
                         {level}
@@ -311,13 +310,11 @@ export function LogViewer() {
                     />
                   )}
                 </React.Fragment>
-              )
+              );
             })}
           </TableBody>
         </Table>
       </ScrollArea>
-
     </div>
-  )
+  );
 }
-

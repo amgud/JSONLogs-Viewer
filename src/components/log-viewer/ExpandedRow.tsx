@@ -1,59 +1,53 @@
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { TableCell, TableRow } from "@/components/ui/table"
-import {
-  Check,
-  Copy,
-  Maximize2,
-  Minimize2,
-  Terminal,
-} from "lucide-react"
-import { cn } from "@/lib/utils"
-import type { LogEntry } from "@/lib/parseJsonl"
-import { extractStackTraces } from "./types"
-import { JsonHighlight } from "./JsonHighlight"
-import { StackTraceView } from "./StackTrace"
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { TableCell, TableRow } from '@/components/ui/table';
+import { Check, Copy, Maximize2, Minimize2, Terminal } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import type { LogEntry } from '@/lib/parseJsonl';
+import { extractStackTraces } from './types';
+import { JsonHighlight } from './JsonHighlight';
+import { StackTraceView } from './StackTrace';
 
 export function ExpandedRow({
   entry,
   colSpan,
 }: {
-  entry: LogEntry
-  colSpan: number
+  entry: LogEntry;
+  colSpan: number;
 }) {
-  const [view, setView] = useState<"json" | "trace">("json")
-  const [copied, setCopied] = useState(false)
-  const [fullscreen, setFullscreen] = useState(false)
-  const traces = extractStackTraces(entry)
+  const [view, setView] = useState<'json' | 'trace'>('json');
+  const [copied, setCopied] = useState(false);
+  const [fullscreen, setFullscreen] = useState(false);
+  const traces = extractStackTraces(entry);
 
   const json = JSON.stringify(
-    Object.fromEntries(Object.entries(entry).filter(([k]) => k !== "id")),
+    Object.fromEntries(Object.entries(entry).filter(([k]) => k !== 'id')),
     null,
-    2
-  )
+    2,
+  );
 
   const handleCopyJson = () => {
     void navigator.clipboard.writeText(json).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
-  }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
 
   const handleCopyTrace = (trace: string) => {
     void navigator.clipboard.writeText(trace).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1500)
-    })
-  }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
 
   useEffect(() => {
-    if (!fullscreen) return
+    if (!fullscreen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setFullscreen(false)
-    }
-    window.addEventListener("keydown", onKey)
-    return () => window.removeEventListener("keydown", onKey)
-  }, [fullscreen])
+      if (e.key === 'Escape') setFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [fullscreen]);
 
   const tabBar = (inFullscreen: boolean) => (
     <div
@@ -62,38 +56,38 @@ export function ExpandedRow({
     >
       <button
         className={cn(
-          "px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors",
-          view === "json"
-            ? "border-primary text-foreground"
-            : "border-transparent text-muted-foreground hover:text-foreground"
+          'px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors',
+          view === 'json'
+            ? 'border-primary text-foreground'
+            : 'border-transparent text-muted-foreground hover:text-foreground',
         )}
-        onClick={() => setView("json")}
+        onClick={() => setView('json')}
       >
         JSON
       </button>
       {traces.length > 0 && (
         <button
           className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors",
-            view === "trace"
-              ? "border-primary text-foreground"
-              : "border-transparent text-muted-foreground hover:text-foreground"
+            'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors',
+            view === 'trace'
+              ? 'border-primary text-foreground'
+              : 'border-transparent text-muted-foreground hover:text-foreground',
           )}
-          onClick={() => setView("trace")}
+          onClick={() => setView('trace')}
         >
           <Terminal className="h-3 w-3" />
           Stack Trace
         </button>
       )}
       <div className="ml-auto flex items-center gap-1 pb-1">
-        {view === "json" ? (
+        {view === 'json' ? (
           <Button
             size="sm"
             variant="ghost"
             className="h-6 gap-1 text-xs"
             onClick={(e) => {
-              e.stopPropagation()
-              handleCopyJson()
+              e.stopPropagation();
+              handleCopyJson();
             }}
           >
             {copied ? (
@@ -116,8 +110,8 @@ export function ExpandedRow({
               variant="ghost"
               className="h-6 gap-1 text-xs"
               onClick={(e) => {
-                e.stopPropagation()
-                handleCopyTrace(trace)
+                e.stopPropagation();
+                handleCopyTrace(trace);
               }}
             >
               {copied ? (
@@ -138,10 +132,10 @@ export function ExpandedRow({
           size="icon"
           variant="ghost"
           className="h-6 w-6"
-          title={inFullscreen ? "Exit fullscreen (Esc)" : "Fullscreen"}
+          title={inFullscreen ? 'Exit fullscreen (Esc)' : 'Fullscreen'}
           onClick={(e) => {
-            e.stopPropagation()
-            setFullscreen((f) => !f)
+            e.stopPropagation();
+            setFullscreen((f) => !f);
           }}
         >
           {inFullscreen ? (
@@ -152,14 +146,14 @@ export function ExpandedRow({
         </Button>
       </div>
     </div>
-  )
+  );
 
   const panelContent = (grow?: boolean) =>
-    view === "json" ? (
+    view === 'json' ? (
       <div
         className={cn(
-          "overflow-y-auto overflow-x-auto p-4",
-          grow ? "flex-1" : "max-h-72"
+          'overflow-y-auto overflow-x-auto p-4',
+          grow ? 'flex-1' : 'max-h-72',
         )}
         onClick={(e) => e.stopPropagation()}
       >
@@ -168,8 +162,8 @@ export function ExpandedRow({
     ) : (
       <div
         className={cn(
-          "overflow-y-auto overflow-x-auto p-4 space-y-4",
-          grow ? "flex-1" : "max-h-96"
+          'overflow-y-auto overflow-x-auto p-4 space-y-4',
+          grow ? 'flex-1' : 'max-h-96',
         )}
         onClick={(e) => e.stopPropagation()}
       >
@@ -184,7 +178,7 @@ export function ExpandedRow({
           </div>
         ))}
       </div>
-    )
+    );
 
   return (
     <>
@@ -208,5 +202,5 @@ export function ExpandedRow({
         </tr>
       )}
     </>
-  )
+  );
 }
