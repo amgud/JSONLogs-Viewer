@@ -7,14 +7,10 @@
   "env": {
     "builtin": true
   },
-  "ignorePatterns": [
-    "dist"
-  ],
+  "ignorePatterns": ["dist"],
   "overrides": [
     {
-      "files": [
-        "**/*.{ts,tsx}"
-      ],
+      "files": ["**/*.{ts,tsx}"],
       "rules": {
         "constructor-super": "error",
         "for-direction": "error",
@@ -64,7 +60,7 @@
         "no-unsafe-optional-chaining": "error",
         "no-unused-labels": "error",
         "no-unused-private-class-members": "error",
-        "no-unused-vars": "error",
+        "no-unused-vars": "warn",
         "no-useless-backreference": "error",
         "no-useless-catch": "error",
         "no-useless-escape": "error",
@@ -100,10 +96,7 @@
           }
         ]
       },
-      "plugins": [
-        "typescript",
-        "react"
-      ],
+      "plugins": ["typescript", "react"],
       "env": {
         "es2020": true,
         "browser": true

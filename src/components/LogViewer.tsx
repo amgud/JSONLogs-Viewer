@@ -12,22 +12,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { parseJsonl, messagePreview, type LogEntry } from '@/lib/parseJsonl';
 import { cn } from '@/lib/utils';
 import { DropZone } from './log-viewer/DropZone';
 import { ExpandedRow } from './log-viewer/ExpandedRow';
 import { SortIcon } from './log-viewer/SortIcon';
+import type { LogEntry, LevelFilter, SortCol, SortDir } from './log-viewer/types';
 import {
-  type SortCol,
-  type SortDir,
-  type LevelFilter,
-  LEVELS,
   levelVariant,
   levelFilterVariant,
   formatTime,
   entryTimestamp,
   matchesSearch,
-} from './log-viewer/types';
+  parseJsonl,
+  messagePreview,
+  LEVELS,
+} from './log-viewer/utils';
 
 export function LogViewer() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -176,7 +175,7 @@ export function LogViewer() {
               key={lvl}
               onClick={() => setLevelFilter(lvl)}
               className={cn(
-                'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                'inline-flex cursor-pointer items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
                 levelFilterVariant(lvl, active),
               )}
             >

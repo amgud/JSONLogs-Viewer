@@ -2,15 +2,14 @@ import { Check, Copy, Maximize2, Minimize2, Terminal } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
-import type { LogEntry } from '@/lib/parseJsonl';
 import { cn } from '@/lib/utils';
 import { JsonHighlight } from './JsonHighlight';
 import { StackTraceView } from './StackTrace';
-import { extractStackTraces } from './types';
+import { type LogEntry, type StackTrace } from './types';
+import { extractStackTraces } from './utils';
 
 export function ExpandedRow({ entry, colSpan }: { entry: LogEntry; colSpan: number }) {
   const [view, setView] = useState<'json' | 'trace'>('json');
-  const [copied, setCopied] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const traces = extractStackTraces(entry);
 
@@ -19,6 +18,65 @@ export function ExpandedRow({ entry, colSpan }: { entry: LogEntry; colSpan: numb
     null,
     2,
   );
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFullscreen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [fullscreen]);
+
+  return (
+    <>
+      <TableRow className="bg-muted/30 hover:bg-muted/30">
+        <TableCell colSpan={colSpan} className="w-full max-w-0 p-0">
+          <TabBar
+            view={view}
+            setView={setView}
+            json={json}
+            traces={traces}
+            setFullscreen={setFullscreen}
+          />
+          <PanelContent view={view} json={json} traces={traces} />
+        </TableCell>
+      </TableRow>
+      {fullscreen && (
+        <tr>
+          <td colSpan={colSpan} className="p-0">
+            <div
+              className="bg-background fixed inset-0 z-50 flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <TabBar
+                view={view}
+                setView={setView}
+                json={json}
+                traces={traces}
+                setFullscreen={setFullscreen}
+                inFullscreen
+              />
+              <PanelContent view={view} inFullscreen json={json} traces={traces} />
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+}
+
+interface TabBarProps {
+  view: 'json' | 'trace';
+  setView: React.Dispatch<React.SetStateAction<'json' | 'trace'>>;
+  json: string;
+  traces: StackTrace[];
+  inFullscreen?: boolean;
+  setFullscreen: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+function TabBar({ view, setView, json, traces, inFullscreen, setFullscreen }: TabBarProps) {
+  const [copied, setCopied] = useState(false);
 
   const handleCopyJson = () => {
     void navigator.clipboard.writeText(json).then(() => {
@@ -34,26 +92,17 @@ export function ExpandedRow({ entry, colSpan }: { entry: LogEntry; colSpan: numb
     });
   };
 
-  useEffect(() => {
-    if (!fullscreen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setFullscreen(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [fullscreen]);
-
-  const tabBar = (inFullscreen: boolean) => (
+  return (
     <div
-      className="flex items-center gap-1 border-b border-border px-3 pt-2 shrink-0"
+      className="border-border flex shrink-0 items-center gap-1 border-b px-3 pt-2"
       onClick={(e) => e.stopPropagation()}
     >
       <button
         className={cn(
-          'px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors',
+          '-mb-px cursor-pointer border-b-2 px-3 py-1.5 text-xs font-medium transition-colors',
           view === 'json'
             ? 'border-primary text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground',
+            : 'text-muted-foreground hover:text-foreground border-transparent',
         )}
         onClick={() => setView('json')}
       >
@@ -62,10 +111,10 @@ export function ExpandedRow({ entry, colSpan }: { entry: LogEntry; colSpan: numb
       {traces.length > 0 && (
         <button
           className={cn(
-            'flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium border-b-2 -mb-px transition-colors',
+            '-mb-px flex cursor-pointer items-center gap-1.5 border-b-2 px-3 py-1.5 text-xs font-medium transition-colors',
             view === 'trace'
               ? 'border-primary text-foreground'
-              : 'border-transparent text-muted-foreground hover:text-foreground',
+              : 'text-muted-foreground hover:text-foreground border-transparent',
           )}
           onClick={() => setView('trace')}
         >
@@ -141,57 +190,38 @@ export function ExpandedRow({ entry, colSpan }: { entry: LogEntry; colSpan: numb
       </div>
     </div>
   );
+}
 
-  const panelContent = (grow?: boolean) =>
-    view === 'json' ? (
-      <div
-        className={cn('overflow-y-auto overflow-x-auto p-4', grow ? 'flex-1' : 'max-h-72')}
-        onClick={(e) => e.stopPropagation()}
-      >
+function PanelContent({
+  view,
+  inFullscreen,
+  json,
+  traces,
+}: {
+  view: 'json' | 'trace';
+  inFullscreen?: boolean;
+  json: string;
+  traces: StackTrace[];
+}) {
+  return (
+    <div
+      className={cn('overflow-x-auto overflow-y-auto p-4', inFullscreen ? 'flex-1' : 'max-h-96')}
+      onClick={(e) => e.stopPropagation()}
+    >
+      {view === 'json' ? (
         <JsonHighlight json={json} />
-      </div>
-    ) : (
-      <div
-        className={cn(
-          'overflow-y-auto overflow-x-auto p-4 space-y-4',
-          grow ? 'flex-1' : 'max-h-96',
-        )}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {traces.map(({ label, trace }, i) => (
+      ) : (
+        traces.map(({ label, trace }, i) => (
           <div key={i}>
             {traces.length > 1 && (
-              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="text-muted-foreground mb-2 text-[10px] font-semibold tracking-wider uppercase">
                 {label}
               </p>
             )}
             <StackTraceView trace={trace} />
           </div>
-        ))}
-      </div>
-    );
-
-  return (
-    <>
-      <TableRow className="bg-muted/30 hover:bg-muted/30">
-        <TableCell colSpan={colSpan} className="p-0 max-w-0 w-full">
-          {tabBar(false)}
-          {panelContent()}
-        </TableCell>
-      </TableRow>
-      {fullscreen && (
-        <tr>
-          <td colSpan={colSpan} className="p-0">
-            <div
-              className="fixed inset-0 z-50 flex flex-col bg-background"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {tabBar(true)}
-              {panelContent(true)}
-            </div>
-          </td>
-        </tr>
+        ))
       )}
-    </>
+    </div>
   );
 }
