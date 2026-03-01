@@ -14,10 +14,10 @@ import {
 } from '@/components/ui/table';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
-import { DropZone } from './log-viewer/DropZone';
-import { ExpandedRow } from './log-viewer/ExpandedRow';
-import { SortIcon } from './log-viewer/SortIcon';
-import type { LogEntry, LevelFilter, SortCol, SortDir } from './log-viewer/types';
+import { DropZone } from './LogViewer/DropZone';
+import { ExpandedRow } from './LogViewer/ExpandedRow';
+import { SortIcon } from './LogViewer/SortIcon';
+import type { LogEntry, LevelFilter, SortCol, SortDir } from './LogViewer/types';
 import {
   levelVariant,
   levelFilterVariant,
@@ -27,7 +27,7 @@ import {
   parseJsonl,
   messagePreview,
   LEVELS,
-} from './log-viewer/utils';
+} from './LogViewer/utils';
 
 export function LogViewer() {
   const { theme, toggle: toggleTheme } = useTheme();
