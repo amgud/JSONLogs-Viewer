@@ -1,4 +1,4 @@
-import { ChevronDown, ChevronRight, Clipboard, FileText, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Clipboard, FileText, Moon, Sun, X } from 'lucide-react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
 import { DropZone } from './log-viewer/DropZone';
 import { ExpandedRow } from './log-viewer/ExpandedRow';
@@ -29,6 +30,7 @@ import {
 } from './log-viewer/utils';
 
 export function LogViewer() {
+  const { theme, toggle: toggleTheme } = useTheme();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
@@ -125,6 +127,21 @@ export function LogViewer() {
             Load a <code>.jsonl</code> log file to get started
           </p>
           <DropZone onLoad={handleLoad} />
+          <div className="mt-6 flex justify-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? (
+                <Sun className="mr-2 h-4 w-4" />
+              ) : (
+                <Moon className="mr-2 h-4 w-4" />
+              )}
+              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -140,6 +157,15 @@ export function LogViewer() {
           {visible.length} / {logs.length} entries
         </span>
         <div className="ml-auto flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 shrink-0"
+            title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            onClick={toggleTheme}
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           <Button
             variant="ghost"
             size="sm"
