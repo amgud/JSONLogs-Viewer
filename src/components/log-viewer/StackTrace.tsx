@@ -8,9 +8,7 @@ function StackTraceLine({ line }: { line: string }) {
 
   if (!trimmed.startsWith('at ')) {
     // Error header: "ErrorType: message" or plain message
-    const m = trimmed.match(
-      /^([A-Za-z][\w.]*(?:Error|Exception|Warning)?)\s*:(.*)$/,
-    );
+    const m = trimmed.match(/^([A-Za-z][\w.]*(?:Error|Exception|Warning)?)\s*:(.*)$/);
     if (m) {
       return (
         <span>
@@ -33,8 +31,7 @@ function StackTraceLine({ line }: { line: string }) {
   const withFn = rest.match(/^(.+?)\s+\((.+):(\d+):(\d+)\)$/);
   if (withFn) {
     const [, fn, file, ln, col] = withFn;
-    const fileColor =
-      isNodeInternal || isVendor ? 'text-muted-foreground' : 'text-emerald-400';
+    const fileColor = isNodeInternal || isVendor ? 'text-muted-foreground' : 'text-emerald-400';
     return (
       <span className={dim}>
         {indent}

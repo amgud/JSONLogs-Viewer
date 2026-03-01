@@ -1,20 +1,14 @@
+import { Check, Copy, Maximize2, Minimize2, Terminal } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { Check, Copy, Maximize2, Minimize2, Terminal } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type { LogEntry } from '@/lib/parseJsonl';
-import { extractStackTraces } from './types';
+import { cn } from '@/lib/utils';
 import { JsonHighlight } from './JsonHighlight';
 import { StackTraceView } from './StackTrace';
+import { extractStackTraces } from './types';
 
-export function ExpandedRow({
-  entry,
-  colSpan,
-}: {
-  entry: LogEntry;
-  colSpan: number;
-}) {
+export function ExpandedRow({ entry, colSpan }: { entry: LogEntry; colSpan: number }) {
   const [view, setView] = useState<'json' | 'trace'>('json');
   const [copied, setCopied] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
@@ -151,10 +145,7 @@ export function ExpandedRow({
   const panelContent = (grow?: boolean) =>
     view === 'json' ? (
       <div
-        className={cn(
-          'overflow-y-auto overflow-x-auto p-4',
-          grow ? 'flex-1' : 'max-h-72',
-        )}
+        className={cn('overflow-y-auto overflow-x-auto p-4', grow ? 'flex-1' : 'max-h-72')}
         onClick={(e) => e.stopPropagation()}
       >
         <JsonHighlight json={json} />

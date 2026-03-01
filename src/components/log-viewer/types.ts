@@ -32,8 +32,7 @@ export function levelVariant(level: string) {
 
 export function levelFilterVariant(level: LevelFilter, active: boolean) {
   if (!active) return 'text-muted-foreground border-border hover:bg-muted/50';
-  if (level === 'all')
-    return 'bg-primary text-primary-foreground border-primary';
+  if (level === 'all') return 'bg-primary text-primary-foreground border-primary';
   return levelVariant(level);
 }
 
@@ -58,10 +57,8 @@ export function formatTime(entry: LogEntry): string {
 }
 
 export function entryTimestamp(entry: LogEntry): number {
-  if (entry.timestamp && typeof entry.timestamp === 'number')
-    return entry.timestamp;
-  if (entry.time && typeof entry.time === 'string')
-    return new Date(entry.time).getTime();
+  if (entry.timestamp && typeof entry.timestamp === 'number') return entry.timestamp;
+  if (entry.time && typeof entry.time === 'string') return new Date(entry.time).getTime();
   return entry.id;
 }
 
@@ -79,9 +76,7 @@ export function matchesSearch(entry: LogEntry, query: string): boolean {
 // Stack-trace extraction
 // ---------------------------------------------------------------------------
 
-export function extractStackTraces(
-  entry: LogEntry,
-): { label: string; trace: string }[] {
+export function extractStackTraces(entry: LogEntry): { label: string; trace: string }[] {
   const out: { label: string; trace: string }[] = [];
 
   // top-level .stack (e.g. warn entries)

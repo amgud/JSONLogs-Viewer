@@ -1,5 +1,5 @@
+import { ChevronDown, ChevronRight, Clipboard, FileText, X } from 'lucide-react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { parseJsonl, messagePreview, type LogEntry } from '@/lib/parseJsonl';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,14 +12,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  ChevronDown,
-  ChevronRight,
-  Clipboard,
-  FileText,
-  X,
-} from 'lucide-react';
+import { parseJsonl, messagePreview, type LogEntry } from '@/lib/parseJsonl';
 import { cn } from '@/lib/utils';
+import { DropZone } from './log-viewer/DropZone';
+import { ExpandedRow } from './log-viewer/ExpandedRow';
+import { SortIcon } from './log-viewer/SortIcon';
 import {
   type SortCol,
   type SortDir,
@@ -31,9 +28,6 @@ import {
   entryTimestamp,
   matchesSearch,
 } from './log-viewer/types';
-import { SortIcon } from './log-viewer/SortIcon';
-import { DropZone } from './log-viewer/DropZone';
-import { ExpandedRow } from './log-viewer/ExpandedRow';
 
 export function LogViewer() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -58,11 +52,7 @@ export function LogViewer() {
     if (!fileName) return; // handled by DropZone
     const onPaste = (e: ClipboardEvent) => {
       const target = e.target as HTMLElement;
-      if (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.isContentEditable
-      )
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
         return;
       const text = e.clipboardData?.getData('text') ?? '';
       if (text.trim()) handleLoad(text, 'clipboard');
@@ -131,9 +121,7 @@ export function LogViewer() {
     return (
       <div className="bg-background flex min-h-screen items-center justify-center p-8">
         <div className="w-full max-w-lg">
-          <h1 className="mb-2 text-center text-2xl font-semibold tracking-tight">
-            BFF Log Viewer
-          </h1>
+          <h1 className="mb-2 text-center text-2xl font-semibold tracking-tight">BFF Log Viewer</h1>
           <p className="text-muted-foreground mb-8 text-center text-sm">
             Load a <code>.jsonl</code> log file to get started
           </p>
@@ -193,9 +181,7 @@ export function LogViewer() {
               )}
             >
               {lvl.toUpperCase()}
-              <span className="rounded bg-current/10 px-1 opacity-70">
-                {count}
-              </span>
+              <span className="rounded bg-current/10 px-1 opacity-70">{count}</span>
             </button>
           );
         })}
@@ -228,8 +214,7 @@ export function LogViewer() {
                 onClick={() => handleSort('time')}
               >
                 <span className="flex items-center">
-                  Time{' '}
-                  <SortIcon col="time" sortCol={sortCol} sortDir={sortDir} />
+                  Time <SortIcon col="time" sortCol={sortCol} sortDir={sortDir} />
                 </span>
               </TableHead>
               <TableHead
@@ -237,8 +222,7 @@ export function LogViewer() {
                 onClick={() => handleSort('level')}
               >
                 <span className="flex items-center">
-                  Level{' '}
-                  <SortIcon col="level" sortCol={sortCol} sortDir={sortDir} />
+                  Level <SortIcon col="level" sortCol={sortCol} sortDir={sortDir} />
                 </span>
               </TableHead>
               <TableHead className="text-xs">Message</TableHead>
@@ -248,10 +232,7 @@ export function LogViewer() {
           <TableBody>
             {visible.length === 0 && (
               <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="text-muted-foreground py-16 text-center text-sm"
-                >
+                <TableCell colSpan={4} className="text-muted-foreground py-16 text-center text-sm">
                   No log entries match the current filter.
                 </TableCell>
               </TableRow>
@@ -277,10 +258,7 @@ export function LogViewer() {
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={cn(
-                          'text-[10px] font-semibold uppercase',
-                          levelVariant(level),
-                        )}
+                        className={cn('text-[10px] font-semibold uppercase', levelVariant(level))}
                       >
                         {level}
                       </Badge>
@@ -301,13 +279,7 @@ export function LogViewer() {
                       )}
                     </TableCell>
                   </TableRow>
-                  {expanded && (
-                    <ExpandedRow
-                      key={`exp-${entry.id}`}
-                      entry={entry}
-                      colSpan={4}
-                    />
-                  )}
+                  {expanded && <ExpandedRow key={`exp-${entry.id}`} entry={entry} colSpan={4} />}
                 </React.Fragment>
               );
             })}

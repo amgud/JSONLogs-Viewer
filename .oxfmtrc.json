@@ -7,6 +7,6 @@
   },
 
   "experimentalTailwindcss": {
-    "functions": ["tv", "cn", "twMerge"]
+    "functions": ["tv", "cn", "twMerge", "cva"]
   }
 }
