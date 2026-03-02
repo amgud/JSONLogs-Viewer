@@ -122,7 +122,7 @@ export function LogViewer() {
     return (
       <div className="bg-background flex min-h-screen items-center justify-center p-8">
         <div className="w-full max-w-lg">
-          <h1 className="mb-2 text-center text-2xl font-semibold tracking-tight">BFF Log Viewer</h1>
+          <h1 className="mb-2 text-center text-2xl font-semibold tracking-tight">Logs Viewer</h1>
           <p className="text-muted-foreground mb-8 text-center text-sm">
             Load a <code>.jsonl</code> log file to get started
           </p>

@@ -62,7 +62,7 @@ export function JsonHighlight({ json }: { json: string }) {
   if (last < json.length) parts.push(json.slice(last));
 
   return (
-    <pre className="overflow-x-auto rounded-md bg-black/40 p-4 text-xs leading-relaxed font-mono whitespace-pre">
+    <pre className="overflow-x-auto rounded-md bg-black/40 p-4 font-mono text-xs leading-relaxed whitespace-pre">
       {parts}
     </pre>
   );

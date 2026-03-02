@@ -1,7 +1,7 @@
 {
-  "name": "BFF Log Viewer",
-  "short_name": "LogViewer",
-  "description": "View and analyse BFF structured logs",
+  "name": "Logs Viewer",
+  "short_name": "LogsViewer",
+  "description": "View and analyse structured logs",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

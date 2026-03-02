@@ -2,7 +2,7 @@ import path from 'path';
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
-import { VitePWA } from 'vite-plugin-pwa';
+import { VitePWA as pwa } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,13 +13,13 @@ export default defineConfig({
         plugins: [['babel-plugin-react-compiler']],
       },
     }),
-    VitePWA({
+    pwa({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'pwa-icon.svg'],
       manifest: {
-        name: 'BFF Log Viewer',
-        short_name: 'LogViewer',
-        description: 'View and analyse BFF structured logs',
+        name: 'Logs Viewer',
+        short_name: 'LogsViewer',
+        description: 'View and analyse structured logs',
         theme_color: '#1e293b',
         background_color: '#0f172a',
         display: 'standalone',

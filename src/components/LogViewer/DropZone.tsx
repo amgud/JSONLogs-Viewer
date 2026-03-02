@@ -66,14 +66,14 @@ export function DropZone({ onLoad }: { onLoad: (text: string, name: string) => v
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
     >
-      <div className="rounded-full border border-border bg-muted p-4">
-        <FileText className="h-8 w-8 text-muted-foreground" />
+      <div className="border-border bg-muted rounded-full border p-4">
+        <FileText className="text-muted-foreground h-8 w-8" />
       </div>
       <div className="text-center">
         <p className="text-sm font-medium">
           Drop a <code>.jsonl</code> file here
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">or choose an option below</p>
+        <p className="text-muted-foreground mt-1 text-xs">or choose an option below</p>
       </div>
       <div className="flex gap-2">
         <Button variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
@@ -85,10 +85,10 @@ export function DropZone({ onLoad }: { onLoad: (text: string, name: string) => v
           Paste logs
         </Button>
       </div>
-      {pasteError && <p className="text-xs text-destructive">{pasteError}</p>}
-      <p className="text-xs text-muted-foreground/60">
+      {pasteError && <p className="text-destructive text-xs">{pasteError}</p>}
+      <p className="text-muted-foreground/60 text-xs">
         or press{' '}
-        <kbd className="rounded border border-border px-1 py-0.5 font-mono text-[10px]">⌘V</kbd>{' '}
+        <kbd className="border-border rounded border px-1 py-0.5 font-mono text-[10px]">⌘V</kbd>{' '}
         anywhere on the page
       </p>
       <input
