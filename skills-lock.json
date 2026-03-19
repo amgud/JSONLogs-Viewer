@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "radix-to-baseui-migration": {
+      "source": "ghozysamudra/ai",
+      "sourceType": "github",
+      "computedHash": "558620322d10e9cb9b50132d2a943b49a61d3284c46cea42a4a926282282f4ce"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "computedHash": "507f011a70e8b3ae242bdc0bb5b39fd91a1d4049a0f3c281991ccf84973d591c"
+    }
+  }
+}

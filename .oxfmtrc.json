@@ -2,11 +2,10 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "ignorePatterns": [],
   "singleQuote": true,
-  "experimentalSortImports": {
-    "newlinesBetween": false
+  "sortImports": {
+    "newlinesBetween": true,
   },
-
-  "experimentalTailwindcss": {
-    "functions": ["tv", "cn", "twMerge", "cva"]
-  }
+  "sortTailwindcss": {
+    "functions": ["tv", "cn", "twMerge", "cva"],
+  },
 }
