@@ -1,75 +1,46 @@
-# React + TypeScript + Vite
+# Log Viewer
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A lightweight, browser-based viewer for structured `.jsonl` log files. Built with React, TypeScript, Tailwind CSS, and Vite. Installable as a PWA.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Drag & drop** or **paste** `.jsonl` log files to view them
+- Filter logs by level (error, warn, info, debug, trace)
+- Full-text search across log entries
+- Sortable columns (time, level)
+- Expandable rows with JSON detail view and stack trace rendering
+- Dark / light theme toggle
+- Logs persist in `sessionStorage` across reloads
+- Installable as a Progressive Web App
 
-## React Compiler
+## Getting Started
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+```sh
+# Install dependencies
+bun install
 
-Note: This will impact Vite dev & build performances.
+# Start dev server
+bun dev
 
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
+# Build for production
+bun run bundle
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Scripts
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x';
-import reactDom from 'eslint-plugin-react-dom';
+| Command           | Description                 |
+| ----------------- | --------------------------- |
+| `bun dev`         | Start Vite dev server       |
+| `bun run bundle`  | Type-check & build for prod |
+| `bun run preview` | Preview production build    |
+| `bun run lint`    | Lint with oxlint            |
+| `bun run fmt`     | Format with oxfmt           |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-]);
-```
+## Tech Stack
+
+- [React 19](https://react.dev) with React Compiler
+- [Vite 8](https://vite.dev)
+- [Tailwind CSS 4](https://tailwindcss.com)
+- [Base UI](https://base-ui.com)
+- [Lucide Icons](https://lucide.dev)
+- [vite-plugin-pwa](https://vite-pwa-org.netlify.app)
