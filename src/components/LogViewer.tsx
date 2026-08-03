@@ -35,10 +35,9 @@ export function LogViewer() {
     setLogFileToStorage(parsed, name);
   }, []);
 
-  // Global paste handler when logs are already loaded
   useEffect(() => {
-    if (!fileName) return; // handled by DropZone
     const onPaste = (e: ClipboardEvent) => {
+      // ignore if a text input is focused
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
         return;
@@ -88,10 +87,6 @@ export function LogViewer() {
     return filtered;
   }, [logs, levelFilter, search]);
 
-  if (!fileName) {
-    return <Welcome onLoad={handleLoad} toggleTheme={toggleTheme} theme={theme} />;
-  }
-
   return (
     <div className="bg-background flex h-screen flex-col">
       {/* Header */}
@@ -101,7 +96,8 @@ export function LogViewer() {
         <span className="text-muted-foreground hidden text-xs sm:inline">
           {visible.length} / {logs.length} entries
         </span>
-        <div className="ml-auto flex items-center gap-1">
+        <div className="flex-1 text-center text-sm font-semibold">Logs Viewer</div>
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
@@ -171,10 +167,13 @@ export function LogViewer() {
         </div>
       </div>
 
-      {/* Table */}
-      <ScrollArea className="flex-1">
-        <LogTable logs={visible} />
-      </ScrollArea>
+      {fileName ? (
+        <ScrollArea className="flex-1">
+          <LogTable logs={visible} />
+        </ScrollArea>
+      ) : (
+        <Welcome onLoad={handleLoad} />
+      )}
     </div>
   );
 }

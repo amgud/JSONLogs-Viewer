@@ -1,5 +1,5 @@
 import { Clipboard, FileText, Upload } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -38,20 +38,6 @@ export function DropZone({ onLoad }: DropZoneProps) {
       setPasteError('Clipboard access denied — try Cmd+V in the page');
     }
   };
-
-  // Also handle global Cmd+V / Ctrl+V on the drop-zone page
-  useEffect(() => {
-    const onPaste = (e: ClipboardEvent) => {
-      // ignore if a text input is focused
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
-        return;
-      const text = e.clipboardData?.getData('text') ?? '';
-      if (text.trim()) onLoad(text, 'clipboard');
-    };
-    document.addEventListener('paste', onPaste);
-    return () => document.removeEventListener('paste', onPaste);
-  }, [onLoad]);
 
   return (
     <div
