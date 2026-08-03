@@ -3,22 +3,12 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
-import { LogRow } from './LogViewer/LogRow';
-import { SortIcon } from './LogViewer/SortIcon';
-import type { LogEntry, LevelFilter, SortCol, SortDir } from './LogViewer/types';
+import { LogTable } from './LogViewer/LogTable';
+import type { LogEntry, LevelFilter } from './LogViewer/types';
 import {
   levelFilterVariant,
-  entryTimestamp,
   matchesSearch,
   parseJsonl,
   LEVELS,
@@ -35,8 +25,6 @@ export function LogViewer() {
   const [fileName, setFileName] = useState<string | null>(logFile?.name ?? null);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
   const [search, setSearch] = useState('');
-  const [sortCol, setSortCol] = useState<SortCol | null>('time');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const handleLoad = useCallback((text: string, name: string) => {
@@ -62,22 +50,6 @@ export function LogViewer() {
     document.addEventListener('paste', onPaste);
     return () => document.removeEventListener('paste', onPaste);
   }, [fileName, handleLoad]);
-
-  const handleSort = (col: SortCol) => {
-    if (sortCol !== col) {
-      setSortCol(col);
-      setSortDir('asc');
-    } else if (sortDir === 'asc') {
-      setSortDir('desc');
-    } else if (sortDir === 'desc') {
-      // third click — reset
-      setSortCol(null);
-      setSortDir('none');
-    } else {
-      setSortCol(col);
-      setSortDir('asc');
-    }
-  };
 
   const handlePasteFromHeader = async () => {
     try {
@@ -116,17 +88,8 @@ export function LogViewer() {
     if (search) {
       filtered = filtered.filter((e) => matchesSearch(e, search));
     }
-    if (!sortCol || sortDir === 'none') return filtered;
-    return [...filtered].sort((a, b) => {
-      let cmp = 0;
-      if (sortCol === 'time') {
-        cmp = entryTimestamp(a) - entryTimestamp(b);
-      } else {
-        cmp = (a.level ?? '').localeCompare(b.level ?? '');
-      }
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
-  }, [logs, levelFilter, search, sortCol, sortDir]);
+    return filtered;
+  }, [logs, levelFilter, search]);
 
   if (!fileName) {
     return <Welcome onLoad={handleLoad} toggleTheme={toggleTheme} theme={theme} />;
@@ -213,47 +176,7 @@ export function LogViewer() {
 
       {/* Table */}
       <ScrollArea className="flex-1">
-        <Table className="table-fixed">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead
-                className="hidden w-44 cursor-pointer text-xs whitespace-nowrap select-none sm:table-cell"
-                onClick={() => handleSort('time')}
-              >
-                <span className="flex items-center">
-                  Time <SortIcon col="time" sortCol={sortCol} sortDir={sortDir} />
-                </span>
-              </TableHead>
-              <TableHead
-                className="w-24 cursor-pointer text-xs select-none"
-                onClick={() => handleSort('level')}
-              >
-                <span className="flex items-center">
-                  Level <SortIcon col="level" sortCol={sortCol} sortDir={sortDir} />
-                </span>
-              </TableHead>
-              <TableHead className="text-xs">Message</TableHead>
-              <TableHead className="w-8" />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {visible.length === 0 && (
-              <TableRow>
-                <TableCell colSpan={4} className="text-muted-foreground py-16 text-center text-sm">
-                  No log entries match the current filter.
-                </TableCell>
-              </TableRow>
-            )}
-            {visible.map((entry) => (
-              <LogRow
-                key={entry.id}
-                entry={entry}
-                expandedId={expandedId}
-                setExpandedId={setExpandedId}
-              />
-            ))}
-          </TableBody>
-        </Table>
+        <LogTable visible={visible} expandedId={expandedId} setExpandedId={setExpandedId} />
       </ScrollArea>
     </div>
   );
