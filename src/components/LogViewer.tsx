@@ -1,6 +1,5 @@
-import { ChevronDown, ChevronRight, Clipboard, FileText, Moon, Sun, X } from 'lucide-react';
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
+import { Clipboard, FileText, Moon, Sun, X } from 'lucide-react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -14,17 +13,14 @@ import {
 } from '@/components/ui/table';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
-import { ExpandedRow } from './LogViewer/ExpandedRow';
+import { LogRow } from './LogViewer/LogRow';
 import { SortIcon } from './LogViewer/SortIcon';
 import type { LogEntry, LevelFilter, SortCol, SortDir } from './LogViewer/types';
 import {
-  levelVariant,
   levelFilterVariant,
-  formatTime,
   entryTimestamp,
   matchesSearch,
   parseJsonl,
-  messagePreview,
   LEVELS,
   clearLogFileFromStorage,
   getLogFileFromStorage,
@@ -248,52 +244,14 @@ export function LogViewer() {
                 </TableCell>
               </TableRow>
             )}
-            {visible.map((entry) => {
-              const expanded = expandedId === entry.id;
-              const preview = messagePreview(entry);
-              const level = (entry.level ?? 'unknown').toLowerCase();
-
-              return (
-                <React.Fragment key={entry.id}>
-                  <TableRow
-                    key={`row-${entry.id}`}
-                    className={cn(
-                      'cursor-pointer font-mono text-xs',
-                      expanded && 'bg-muted/30 border-b-0',
-                    )}
-                    onClick={() => setExpandedId(expanded ? null : entry.id)}
-                  >
-                    <TableCell className="text-muted-foreground hidden whitespace-nowrap sm:table-cell">
-                      {formatTime(entry)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={cn('text-[10px] font-semibold uppercase', levelVariant(level))}
-                      >
-                        {level}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-0">
-                      <span className="text-muted-foreground mb-0.5 block text-[10px] sm:hidden">
-                        {formatTime(entry)}
-                      </span>
-                      <span className="block truncate" title={preview}>
-                        {preview}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {expanded ? (
-                        <ChevronDown className="h-3.5 w-3.5" />
-                      ) : (
-                        <ChevronRight className="h-3.5 w-3.5" />
-                      )}
-                    </TableCell>
-                  </TableRow>
-                  {expanded && <ExpandedRow key={`exp-${entry.id}`} entry={entry} colSpan={4} />}
-                </React.Fragment>
-              );
-            })}
+            {visible.map((entry) => (
+              <LogRow
+                key={entry.id}
+                entry={entry}
+                expandedId={expandedId}
+                setExpandedId={setExpandedId}
+              />
+            ))}
           </TableBody>
         </Table>
       </ScrollArea>
