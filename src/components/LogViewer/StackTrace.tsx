@@ -77,7 +77,7 @@ function StackTraceLine({ line }: { line: string }) {
 export function StackTraceView({ trace }: { trace: string }) {
   const lines = trace.split('\n');
   return (
-    <pre className="overflow-x-auto rounded-md bg-black/40 p-4 font-mono text-xs leading-6 whitespace-pre">
+    <pre className="overflow-x-auto rounded-md bg-black/40 p-3 font-mono text-xs leading-6 whitespace-pre">
       {lines.map((line, i) => (
         <div key={i}>
           <StackTraceLine line={line} />

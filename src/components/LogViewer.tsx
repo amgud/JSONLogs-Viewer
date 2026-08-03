@@ -100,22 +100,25 @@ export function LogViewer() {
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
-            size="icon"
-            className="h-7 w-7 shrink-0"
+            size="sm"
+            className="shrink-0"
             title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
             onClick={toggleTheme}
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            <span className="hidden text-xs sm:inline">
+              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            </span>
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 gap-1.5 text-xs"
+            className="h-7 gap-1.5"
             title="Paste logs from clipboard"
             onClick={handlePasteFromHeader}
           >
             <Clipboard className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Paste</span>
+            <span className="hidden text-xs sm:inline">Paste</span>
           </Button>
           <Button
             variant="ghost"

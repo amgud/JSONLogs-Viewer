@@ -1,74 +1,10 @@
-import { Check, Copy, Maximize2, Minimize2, Terminal } from 'lucide-react';
-import { useState, useEffect } from 'react';
-
+import { Terminal, Check, Copy, Minimize2, Maximize2 } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+import type { StackTrace } from '../types';
 
-import { JsonHighlight } from './JsonHighlight';
-import { StackTraceView } from './StackTrace';
-import { type LogEntry, type StackTrace } from './types';
-import { extractStackTraces } from './utils';
-
-export function ExpandedRow({ entry, colSpan }: { entry: LogEntry; colSpan: number }) {
-  const [view, setView] = useState<'json' | 'trace'>('json');
-  const [fullscreen, setFullscreen] = useState(false);
-  const traces = extractStackTraces(entry);
-
-  const json = JSON.stringify(
-    Object.fromEntries(Object.entries(entry).filter(([k]) => k !== 'id')),
-    null,
-    2,
-  );
-
-  useEffect(() => {
-    if (!fullscreen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setFullscreen(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [fullscreen]);
-
-  return (
-    <>
-      <TableRow className="bg-muted/30 hover:bg-muted/30">
-        <TableCell colSpan={colSpan} className="w-full max-w-0 p-0">
-          <TabBar
-            view={view}
-            setView={setView}
-            json={json}
-            traces={traces}
-            setFullscreen={setFullscreen}
-          />
-          <PanelContent view={view} json={json} traces={traces} />
-        </TableCell>
-      </TableRow>
-      {fullscreen && (
-        <tr>
-          <td colSpan={colSpan} className="p-0">
-            <div
-              className="bg-background fixed inset-0 z-50 flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <TabBar
-                view={view}
-                setView={setView}
-                json={json}
-                traces={traces}
-                setFullscreen={setFullscreen}
-                inFullscreen
-              />
-              <PanelContent view={view} inFullscreen json={json} traces={traces} />
-            </div>
-          </td>
-        </tr>
-      )}
-    </>
-  );
-}
-
-interface TabBarProps {
+interface ExpandedRowTabBarProps {
   view: 'json' | 'trace';
   setView: React.Dispatch<React.SetStateAction<'json' | 'trace'>>;
   json: string;
@@ -77,7 +13,14 @@ interface TabBarProps {
   setFullscreen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-function TabBar({ view, setView, json, traces, inFullscreen, setFullscreen }: TabBarProps) {
+export function ExpandedRowTabBar({
+  view,
+  setView,
+  json,
+  traces,
+  inFullscreen,
+  setFullscreen,
+}: ExpandedRowTabBarProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopyJson = () => {
@@ -143,7 +86,7 @@ function TabBar({ view, setView, json, traces, inFullscreen, setFullscreen }: Ta
             ) : (
               <>
                 <Copy className="h-3 w-3" />
-                Copy JSON
+                Copy
               </>
             )}
           </Button>
@@ -190,40 +133,6 @@ function TabBar({ view, setView, json, traces, inFullscreen, setFullscreen }: Ta
           )}
         </Button>
       </div>
-    </div>
-  );
-}
-
-function PanelContent({
-  view,
-  inFullscreen,
-  json,
-  traces,
-}: {
-  view: 'json' | 'trace';
-  inFullscreen?: boolean;
-  json: string;
-  traces: StackTrace[];
-}) {
-  return (
-    <div
-      className={cn('overflow-x-auto overflow-y-auto p-4', inFullscreen ? 'flex-1' : 'max-h-96')}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {view === 'json' ? (
-        <JsonHighlight json={json} />
-      ) : (
-        traces.map(({ label, trace }, i) => (
-          <div key={i}>
-            {traces.length > 1 && (
-              <p className="text-muted-foreground mb-2 text-[10px] font-semibold tracking-wider uppercase">
-                {label}
-              </p>
-            )}
-            <StackTraceView trace={trace} />
-          </div>
-        ))
-      )}
     </div>
   );
 }

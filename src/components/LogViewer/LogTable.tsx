@@ -10,8 +10,8 @@ interface LogTableProps {
 }
 
 export function LogTable({ logs }: LogTableProps) {
-  const [sortCol, setSortCol] = useState<SortCol | null>('time');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [sortCol, setSortCol] = useState<SortCol | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('none');
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [prevLogs, setPrevLogs] = useState(logs);
 
