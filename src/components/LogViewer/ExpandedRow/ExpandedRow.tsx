@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react';
 import { TableCell, TableRow } from '@/components/ui/table';
-import { type LogEntry } from '../types';
+import type { ViewType, LogEntry } from '../types';
 import { extractStackTraces } from '../utils';
 import { ExpandedRowContent } from './ExpandedRowContent';
 import { ExpandedRowTabBar } from './ExpandedRowTabBar';
+
 interface ExpandedRowProps {
   entry: LogEntry;
-  colSpan: number;
 }
 
-export function ExpandedRow({ entry, colSpan }: ExpandedRowProps) {
-  const [view, setView] = useState<'json' | 'trace'>('json');
+export function ExpandedRow({ entry }: ExpandedRowProps) {
+  const [view, setView] = useState<ViewType>('json');
   const [fullscreen, setFullscreen] = useState(false);
   const traces = extractStackTraces(entry);
 
@@ -30,38 +30,41 @@ export function ExpandedRow({ entry, colSpan }: ExpandedRowProps) {
   }, [fullscreen]);
 
   return (
+    <ExpandedRowContainer fullscreen={fullscreen}>
+      <ExpandedRowTabBar
+        view={view}
+        setView={setView}
+        json={json}
+        traces={traces}
+        setFullscreen={setFullscreen}
+      />
+      <ExpandedRowContent view={view} json={json} traces={traces} />
+    </ExpandedRowContainer>
+  );
+}
+
+function ExpandedRowContainer({
+  children,
+  fullscreen,
+}: {
+  children: React.ReactNode;
+  fullscreen: boolean;
+}) {
+  return (
     <>
       <TableRow className="bg-muted/30 hover:bg-muted/30">
-        <TableCell colSpan={colSpan} className="w-full max-w-0 p-0">
-          <ExpandedRowTabBar
-            view={view}
-            setView={setView}
-            json={json}
-            traces={traces}
-            setFullscreen={setFullscreen}
-          />
-          <ExpandedRowContent view={view} json={json} traces={traces} />
+        <TableCell colSpan={4} className="w-full max-w-0 p-0">
+          {children}
         </TableCell>
       </TableRow>
+
       {fullscreen && (
-        <tr>
-          <td colSpan={colSpan} className="p-0">
-            <div
-              className="bg-background fixed inset-0 z-50 flex flex-col"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ExpandedRowTabBar
-                view={view}
-                setView={setView}
-                json={json}
-                traces={traces}
-                setFullscreen={setFullscreen}
-                inFullscreen
-              />
-              <ExpandedRowContent view={view} inFullscreen json={json} traces={traces} />
-            </div>
-          </td>
-        </tr>
+        <div
+          className="bg-background fixed inset-0 z-50 flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {children}
+        </div>
       )}
     </>
   );

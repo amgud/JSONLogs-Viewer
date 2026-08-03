@@ -51,7 +51,7 @@ export function LogRow({ entry, expandedId, setExpandedId }: LogRowProps) {
           )}
         </TableCell>
       </TableRow>
-      {expanded && <ExpandedRow key={`exp-${entry.id}`} entry={entry} colSpan={4} />}
+      {expanded && <ExpandedRow key={`exp-${entry.id}`} entry={entry} />}
     </>
   );
 }

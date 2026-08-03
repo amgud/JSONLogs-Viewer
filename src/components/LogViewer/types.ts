@@ -17,4 +17,6 @@ export type SortCol = 'time' | 'level';
 export type SortDir = 'asc' | 'desc' | 'none';
 export type LevelFilter = 'all' | LogLevel;
 
-export type StackTrace = { label: string; trace: string };
+export type StackType = 'stack' | 'trace' | 'downstream';
+export type ViewType = 'json' | StackType;
+export type StackTrace = { type: StackType; label: string; trace: string };

@@ -1,12 +1,12 @@
-import { Terminal, Check, Copy, Minimize2, Maximize2 } from 'lucide-react';
+import { Terminal, Check, Copy, Minimize2, Maximize2, Braces } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { StackTrace } from '../types';
+import type { StackTrace, ViewType } from '../types';
 
 interface ExpandedRowTabBarProps {
-  view: 'json' | 'trace';
-  setView: React.Dispatch<React.SetStateAction<'json' | 'trace'>>;
+  view: ViewType;
+  setView: React.Dispatch<React.SetStateAction<ViewType>>;
   json: string;
   traces: StackTrace[];
   inFullscreen?: boolean;
@@ -44,78 +44,55 @@ export function ExpandedRowTabBar({
     >
       <button
         className={cn(
-          '-mb-px cursor-pointer border-b-2 px-3 py-1.5 text-xs font-medium transition-colors',
+          '-mb-px flex cursor-pointer items-center gap-1.5 border-b-2 px-3 py-1.5 text-xs font-medium transition-colors',
           view === 'json'
             ? 'border-primary text-foreground'
             : 'text-muted-foreground hover:text-foreground border-transparent',
         )}
         onClick={() => setView('json')}
       >
+        <Braces className="h-3 w-3" />
         JSON
       </button>
-      {traces.length > 0 && (
+      {traces.map((trace, i) => (
         <button
+          key={i}
           className={cn(
             '-mb-px flex cursor-pointer items-center gap-1.5 border-b-2 px-3 py-1.5 text-xs font-medium transition-colors',
-            view === 'trace'
+            view === trace.type
               ? 'border-primary text-foreground'
               : 'text-muted-foreground hover:text-foreground border-transparent',
           )}
-          onClick={() => setView('trace')}
+          onClick={() => setView(trace.type)}
         >
           <Terminal className="h-3 w-3" />
-          Stack Trace
+          {trace.label}
         </button>
-      )}
+      ))}
       <div className="ml-auto flex items-center gap-1 pb-1">
-        {view === 'json' ? (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 gap-1 text-xs"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCopyJson();
-            }}
-          >
-            {copied ? (
-              <>
-                <Check className="h-3 w-3 text-green-400" />
-                Copied
-              </>
-            ) : (
-              <>
-                <Copy className="h-3 w-3" />
-                Copy
-              </>
-            )}
-          </Button>
-        ) : (
-          traces.map(({ trace }, i) => (
-            <Button
-              key={i}
-              size="sm"
-              variant="ghost"
-              className="h-6 gap-1 text-xs"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleCopyTrace(trace);
-              }}
-            >
-              {copied ? (
-                <>
-                  <Check className="h-3 w-3 text-green-400" />
-                  Copied
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3 w-3" />
-                  Copy
-                </>
-              )}
-            </Button>
-          ))
-        )}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 gap-1 text-xs"
+          onClick={(e) => {
+            e.stopPropagation();
+            if (view === 'json') handleCopyJson();
+            else handleCopyTrace(traces.find((t) => t.type === view)?.trace || '');
+          }}
+        >
+          {copied ? (
+            <>
+              <Check className="h-3 w-3 text-green-400" />
+              Copied
+            </>
+          ) : (
+            <>
+              <Copy className="h-3 w-3" />
+              Copy
+            </>
+          )}
+        </Button>
+
         <Button
           size="icon"
           variant="ghost"

@@ -163,7 +163,7 @@ export function extractStackTraces(entry: LogEntry): StackTrace[] {
 
   // top-level .stack (e.g. warn entries)
   if (entry.stack && typeof entry.stack === 'string') {
-    out.push({ label: 'Stack Trace', trace: entry.stack });
+    out.push({ type: 'stack', label: 'Stack Trace', trace: entry.stack });
   }
 
   // message.payload.stackTrace (desl-service error entries)
@@ -172,18 +172,17 @@ export function extractStackTraces(entry: LogEntry): StackTrace[] {
     const m = msg as Record<string, unknown>;
     const payload = m['payload'] as Record<string, unknown> | undefined;
     if (payload?.stackTrace && typeof payload.stackTrace === 'string') {
-      out.push({ label: 'Downstream Stack Trace', trace: payload.stackTrace });
+      out.push({ type: 'downstream', label: 'Downstream Stack Trace', trace: payload.stackTrace });
     }
   }
 
   // top-level .stackTrace
   if (entry.stackTrace && typeof entry.stackTrace === 'string') {
-    out.push({ label: 'Stack Trace', trace: entry.stackTrace });
+    out.push({ type: 'trace', label: 'Stack Trace', trace: entry.stackTrace });
   }
 
   return out;
 }
-
 
 export const STORAGE_KEY = 'log-viewer-last-file';
 
