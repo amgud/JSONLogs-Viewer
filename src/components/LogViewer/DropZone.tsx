@@ -1,5 +1,5 @@
 import { Clipboard, FileText, Upload } from 'lucide-react';
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -18,16 +18,12 @@ export function DropZone({ onLoad }: DropZoneProps) {
     reader.readAsText(file);
   };
 
-  const handleDrop = useCallback(
-    (e: React.DragEvent) => {
-      e.preventDefault();
-      setDragging(false);
-      const file = e.dataTransfer.files[0];
-      if (file) readFile(file);
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [onLoad],
-  );
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files[0];
+    if (file) readFile(file);
+  };
 
   const handlePaste = async () => {
     setPasteError(null);

@@ -25,13 +25,11 @@ export function LogViewer() {
   const [fileName, setFileName] = useState<string | null>(logFile?.name ?? null);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
   const [search, setSearch] = useState('');
-  const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const handleLoad = useCallback((text: string, name: string) => {
     const parsed = parseJsonl(text);
     setLogs(parsed);
     setFileName(name);
-    setExpandedId(null);
     setSearch('');
     setLevelFilter('all');
     setLogFileToStorage(parsed, name);
@@ -63,7 +61,6 @@ export function LogViewer() {
   const handleCloseFile = () => {
     setLogs([]);
     setFileName(null);
-    setExpandedId(null);
     setSearch('');
     setLevelFilter('all');
     clearLogFileFromStorage();
@@ -176,7 +173,7 @@ export function LogViewer() {
 
       {/* Table */}
       <ScrollArea className="flex-1">
-        <LogTable visible={visible} expandedId={expandedId} setExpandedId={setExpandedId} />
+        <LogTable logs={visible} />
       </ScrollArea>
     </div>
   );

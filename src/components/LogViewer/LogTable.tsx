@@ -6,18 +6,23 @@ import type { LogEntry, SortCol, SortDir } from './types';
 import { entryTimestamp } from './utils';
 
 interface LogTableProps {
-  visible: LogEntry[];
-  expandedId: number | null;
-  setExpandedId: (id: number | null) => void;
+  logs: LogEntry[];
 }
 
-export function LogTable({ visible, expandedId, setExpandedId }: LogTableProps) {
+export function LogTable({ logs }: LogTableProps) {
   const [sortCol, setSortCol] = useState<SortCol | null>('time');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [prevLogs, setPrevLogs] = useState(logs);
+
+  if (logs !== prevLogs) {
+    setPrevLogs(logs);
+    setExpandedId(null);
+  }
 
   const sorted = useMemo(() => {
-    if (!sortCol || sortDir === 'none') return visible;
-    return [...visible].sort((a, b) => {
+    if (!sortCol || sortDir === 'none') return logs;
+    return [...logs].sort((a, b) => {
       let cmp = 0;
       if (sortCol === 'time') {
         cmp = entryTimestamp(a) - entryTimestamp(b);
@@ -26,7 +31,7 @@ export function LogTable({ visible, expandedId, setExpandedId }: LogTableProps) 
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [visible, sortCol, sortDir]);
+  }, [logs, sortCol, sortDir]);
 
   const handleSort = (col: SortCol) => {
     if (sortCol !== col) {

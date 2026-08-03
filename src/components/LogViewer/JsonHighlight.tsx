@@ -2,7 +2,7 @@ import React from 'react';
 
 // Tokenise a JSON string into coloured spans without any external library.
 const JSON_RE =
-  /(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)|( *"(?:[^"\\]|\\.)*")( *:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}\[\],])/g;
+  /(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)|( *"(?:[^"\\]|\\.)*")( *:)?|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|([{}[\],])/g;
 
 export function JsonHighlight({ json }: { json: string }) {
   const parts: React.ReactNode[] = [];
