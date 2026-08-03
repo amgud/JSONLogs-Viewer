@@ -1,8 +1,10 @@
 import { Check, Copy, Maximize2, Minimize2, Terminal } from 'lucide-react';
 import { useState, useEffect } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
+
 import { JsonHighlight } from './JsonHighlight';
 import { StackTraceView } from './StackTrace';
 import { type LogEntry, type StackTrace } from './types';
@@ -94,7 +96,7 @@ function TabBar({ view, setView, json, traces, inFullscreen, setFullscreen }: Ta
 
   return (
     <div
-      className="border-border flex shrink-0 items-center gap-1 border-b px-3 pt-2"
+      className="border-border flex shrink-0 items-center gap-1 border-b px-3"
       onClick={(e) => e.stopPropagation()}
     >
       <button

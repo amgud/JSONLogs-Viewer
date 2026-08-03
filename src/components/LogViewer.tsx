@@ -31,10 +31,31 @@ import {
   LEVELS,
 } from './LogViewer/utils';
 
+const STORAGE_KEY = 'log-viewer-last-file';
+
+const getLogFileFromStorage = (): { logs: LogEntry[]; name: string } | null => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return null;
+  }
+};
+
+const setLogFileToStorage = (logs: LogEntry[], name: string) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, logs }));
+};
+
+const clearLogFileFromStorage = () => {
+  localStorage.removeItem(STORAGE_KEY);
+};
+
 export function LogViewer() {
   const { theme, toggle: toggleTheme } = useTheme();
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [logFile] = useState(getLogFileFromStorage());
+  const [logs, setLogs] = useState<LogEntry[]>(logFile?.logs ?? []);
+  const [fileName, setFileName] = useState<string | null>(logFile?.name ?? null);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>('all');
   const [search, setSearch] = useState('');
   const [sortCol, setSortCol] = useState<SortCol | null>('time');
@@ -48,6 +69,7 @@ export function LogViewer() {
     setExpandedId(null);
     setSearch('');
     setLevelFilter('all');
+    setLogFileToStorage(parsed, name);
   }, []);
 
   // Global paste handler when logs are already loaded
@@ -87,6 +109,15 @@ export function LogViewer() {
     } catch {
       /* ignore */
     }
+  };
+
+  const handleCloseFile = () => {
+    setLogs([]);
+    setFileName(null);
+    setExpandedId(null);
+    setSearch('');
+    setLevelFilter('all');
+    clearLogFileFromStorage();
   };
 
   const levelCounts = useMemo(() => {
@@ -183,10 +214,7 @@ export function LogViewer() {
             size="icon"
             className="h-7 w-7 shrink-0"
             title="Close file"
-            onClick={() => {
-              setFileName(null);
-              setLogs([]);
-            }}
+            onClick={handleCloseFile}
           >
             <X className="h-4 w-4" />
           </Button>
