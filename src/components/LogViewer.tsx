@@ -1,6 +1,5 @@
 import { ChevronDown, ChevronRight, Clipboard, FileText, Moon, Sun, X } from 'lucide-react';
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
-
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,8 +14,6 @@ import {
 } from '@/components/ui/table';
 import { useTheme } from '@/hooks/useTheme';
 import { cn } from '@/lib/utils';
-
-import { DropZone } from './LogViewer/DropZone';
 import { ExpandedRow } from './LogViewer/ExpandedRow';
 import { SortIcon } from './LogViewer/SortIcon';
 import type { LogEntry, LevelFilter, SortCol, SortDir } from './LogViewer/types';
@@ -29,27 +26,11 @@ import {
   parseJsonl,
   messagePreview,
   LEVELS,
+  clearLogFileFromStorage,
+  getLogFileFromStorage,
+  setLogFileToStorage,
 } from './LogViewer/utils';
-
-const STORAGE_KEY = 'log-viewer-last-file';
-
-const getLogFileFromStorage = (): { logs: LogEntry[]; name: string } | null => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) return null;
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return null;
-  }
-};
-
-const setLogFileToStorage = (logs: LogEntry[], name: string) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, logs }));
-};
-
-const clearLogFileFromStorage = () => {
-  localStorage.removeItem(STORAGE_KEY);
-};
+import { Welcome } from './LogViewer/Welcome';
 
 export function LogViewer() {
   const { theme, toggle: toggleTheme } = useTheme();
@@ -152,32 +133,7 @@ export function LogViewer() {
   }, [logs, levelFilter, search, sortCol, sortDir]);
 
   if (!fileName) {
-    return (
-      <div className="bg-background flex min-h-screen items-center justify-center p-8">
-        <div className="w-full max-w-lg">
-          <h1 className="mb-2 text-center text-2xl font-semibold tracking-tight">Logs Viewer</h1>
-          <p className="text-muted-foreground mb-8 text-center text-sm">
-            Load a <code>.jsonl</code> log file to get started
-          </p>
-          <DropZone onLoad={handleLoad} />
-          <div className="mt-6 flex justify-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            >
-              {theme === 'dark' ? (
-                <Sun className="mr-2 h-4 w-4" />
-              ) : (
-                <Moon className="mr-2 h-4 w-4" />
-              )}
-              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+    return <Welcome onLoad={handleLoad} toggleTheme={toggleTheme} theme={theme} />;
   }
 
   return (
@@ -303,7 +259,7 @@ export function LogViewer() {
                     key={`row-${entry.id}`}
                     className={cn(
                       'cursor-pointer font-mono text-xs',
-                      expanded && 'bg-muted/20 border-b-0',
+                      expanded && 'bg-muted/30 border-b-0',
                     )}
                     onClick={() => setExpandedId(expanded ? null : entry.id)}
                   >

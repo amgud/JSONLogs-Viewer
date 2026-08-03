@@ -3,7 +3,11 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-export function DropZone({ onLoad }: { onLoad: (text: string, name: string) => void }) {
+interface DropZoneProps {
+  onLoad: (text: string, name: string) => void;
+}
+
+export function DropZone({ onLoad }: DropZoneProps) {
   const [dragging, setDragging] = useState(false);
   const [pasteError, setPasteError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);

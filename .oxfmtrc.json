@@ -3,9 +3,9 @@
   "ignorePatterns": [],
   "singleQuote": true,
   "sortImports": {
-    "newlinesBetween": true,
+    "newlinesBetween": false
   },
   "sortTailwindcss": {
-    "functions": ["tv", "cn", "twMerge", "cva"],
-  },
+    "functions": ["tv", "cn", "twMerge", "cva"]
+  }
 }

@@ -183,3 +183,24 @@ export function extractStackTraces(entry: LogEntry): StackTrace[] {
 
   return out;
 }
+
+
+export const STORAGE_KEY = 'log-viewer-last-file';
+
+export const getLogFileFromStorage = (): { logs: LogEntry[]; name: string } | null => {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (!stored) return null;
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return null;
+  }
+};
+
+export const setLogFileToStorage = (logs: LogEntry[], name: string) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ name, logs }));
+};
+
+export const clearLogFileFromStorage = () => {
+  localStorage.removeItem(STORAGE_KEY);
+};
