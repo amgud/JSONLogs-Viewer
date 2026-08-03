@@ -16,8 +16,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon-180x180.png', 'pwa-icon.svg'],
       manifest: {
-        name: 'Logs Viewer',
-        short_name: 'LogsViewer',
+        name: 'JSONLogs Viewer',
+        short_name: 'JSONLogsViewer',
         description: 'View and analyse structured logs',
         theme_color: '#1e293b',
         background_color: '#0f172a',

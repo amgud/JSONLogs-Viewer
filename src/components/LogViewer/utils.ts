@@ -184,7 +184,7 @@ export function extractStackTraces(entry: LogEntry): StackTrace[] {
   return out;
 }
 
-export const STORAGE_KEY = 'log-viewer-last-file';
+export const STORAGE_KEY = 'jsonlogs-viewer-last-file';
 
 export const getLogFileFromStorage = (): { logs: LogEntry[]; name: string } | null => {
   const stored = localStorage.getItem(STORAGE_KEY);

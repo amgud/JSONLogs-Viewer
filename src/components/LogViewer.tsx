@@ -95,7 +95,7 @@ export function LogViewer() {
         <span className="text-muted-foreground hidden text-xs sm:inline">
           {visible.length} / {logs.length} entries
         </span>
-        <div className="flex-1 text-center text-sm font-semibold">Logs Viewer</div>
+        <div className="flex-1 text-center text-sm font-semibold">JSONLogs Viewer</div>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"

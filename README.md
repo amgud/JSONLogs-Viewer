@@ -1,4 +1,4 @@
-# Log Viewer
+# JSONLogs Viewer
 
 A lightweight, browser-based viewer for structured `.jsonl` log files. Built with React, TypeScript, Tailwind CSS, and Vite. Installable as a PWA.
 
