@@ -51,7 +51,7 @@ export function LogTable({ logs }: LogTableProps) {
 
   return (
     <Table className="table-fixed">
-      <TableHeader>
+      <TableHeader className="bg-background sticky top-0 z-10">
         <TableRow className="hover:bg-transparent">
           <TableHead
             className="hidden w-44 cursor-pointer text-xs whitespace-nowrap select-none sm:table-cell"

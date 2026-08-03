@@ -170,13 +170,7 @@ export function LogViewer() {
         </div>
       </div>
 
-      {fileName ? (
-        <ScrollArea className="flex-1">
-          <LogTable logs={visible} />
-        </ScrollArea>
-      ) : (
-        <Welcome onLoad={handleLoad} />
-      )}
+      {fileName ? <LogTable logs={visible} /> : <Welcome onLoad={handleLoad} />}
     </div>
   );
 }
