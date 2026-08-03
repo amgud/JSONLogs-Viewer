@@ -7,7 +7,7 @@ import { VitePWA as pwa } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/jsonlogs-viewer/',
+  base: process.env.GITHUB_PAGES ? `/${process.env.GITHUB_PAGES}/` : '/',
   plugins: [
     tailwindcss(),
     react(),
@@ -22,8 +22,8 @@ export default defineConfig({
         theme_color: '#1e293b',
         background_color: '#0f172a',
         display: 'standalone',
-        scope: '/jsonlogs-viewer/',
-        start_url: '/jsonlogs-viewer/',
+        scope: './',
+        start_url: './',
         icons: [
           {
             src: 'pwa-64x64.png',
