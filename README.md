@@ -28,13 +28,13 @@ bun run bundle
 
 ## Scripts
 
-| Command           | Description                 |
-| ----------------- | --------------------------- |
-| `bun dev`         | Start Vite dev server       |
-| `bun run bundle`  | Type-check & build for prod |
-| `bun run preview` | Preview production build    |
-| `bun run lint`    | Lint with oxlint            |
-| `bun run fmt`     | Format with oxfmt           |
+| Command        | Description                 |
+| -------------- | --------------------------- |
+| `bun dev`      | Start Vite dev server       |
+| `bun bundle`.  | Type-check & build for prod |
+| `bun preview`. | Preview production build    |
+| `bun lint`.    | Lint with oxlint            |
+| `bun fmt`.     | Format with oxfmt           |
 
 ## Tech Stack
 

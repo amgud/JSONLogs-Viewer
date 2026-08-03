@@ -1,11 +1,18 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "ignorePatterns": [],
+  "ignorePatterns": [
+    ".agents/**"
+  ],
   "singleQuote": true,
   "sortImports": {
     "newlinesBetween": false
   },
   "sortTailwindcss": {
-    "functions": ["tv", "cn", "twMerge", "cva"]
+    "functions": [
+      "tv",
+      "cn",
+      "twMerge",
+      "cva"
+    ]
   }
 }

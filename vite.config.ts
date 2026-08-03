@@ -1,5 +1,4 @@
 import path from 'path';
-
 import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
@@ -8,6 +7,7 @@ import { VitePWA as pwa } from 'vite-plugin-pwa';
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/jsonlogs-viewer/',
   plugins: [
     tailwindcss(),
     react(),
@@ -22,8 +22,8 @@ export default defineConfig({
         theme_color: '#1e293b',
         background_color: '#0f172a',
         display: 'standalone',
-        scope: '/',
-        start_url: '/',
+        scope: '/jsonlogs-viewer/',
+        start_url: '/jsonlogs-viewer/',
         icons: [
           {
             src: 'pwa-64x64.png',

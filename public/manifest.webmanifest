@@ -2,12 +2,12 @@
   "name": "Logs Viewer",
   "short_name": "LogsViewer",
   "description": "View and analyse structured logs",
-  "start_url": "/",
+  "start_url": "/jsonlogs-viewer/",
   "display": "standalone",
   "background_color": "#0f172a",
   "theme_color": "#1e293b",
   "lang": "en",
-  "scope": "/",
+  "scope": "/jsonlogs-viewer/",
   "icons": [
     {
       "src": "pwa-64x64.png",
